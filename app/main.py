@@ -1,13 +1,7 @@
 from typing import Union
 from fastapi import FastAPI
+from routers.routers import router
 
 app = FastAPI()
 
-
-@app.get("/")
-def read_root():
-    return {
-        "status_code": 200,
-        "detail": "ok",
-        "result": "working"
-    }
+app.include_router(router=router)
