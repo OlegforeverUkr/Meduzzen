@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from app.routers.routers import router
 from app.core.config import settings
+from app.core.middleware import setup_cors
 import uvicorn
 
 app = FastAPI()
-
+setup_cors(app=app)
 app.include_router(router=router)
 
 if __name__ == "__main__":

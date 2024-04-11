@@ -8,7 +8,5 @@
        ports:
          - "8000:8000"
 
-       environment:
-         RELOAD: 'True'
-         HOST: '0.0.0.0'
-         PORT: '8000'
+       env_file:
+         - .env
