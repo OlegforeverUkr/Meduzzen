@@ -4,13 +4,7 @@ FROM python:3.11
 WORKDIR /code
 
 #
-ADD ./.env /code/.env
-
-#
-COPY ./requirements.txt /code/requirements.txt
-
-#
-COPY ./requirements_dev.txt /code/requirements_dev.txt
+COPY ./requirements.txt ./.env ./requirements_dev.txt /code/
 
 #
 RUN pip install --no-cache-dir --upgrade -r /code/requirements_dev.txt
