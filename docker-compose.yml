@@ -7,8 +7,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/code/app
-      - ./tests:/code/tests
+      - ./:/code
     env_file:
       - .env
     networks:
