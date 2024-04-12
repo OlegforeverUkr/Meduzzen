@@ -17,6 +17,6 @@ class Settings(BaseSettings):
 
     REDIS_HOST: str
     REDIS_PORT: int
-
+    REDIS_URL: str
 
 settings = Settings(_env_file='../.env', _env_file_encoding='utf-8')
