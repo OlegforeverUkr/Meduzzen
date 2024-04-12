@@ -9,5 +9,14 @@ class Settings(BaseSettings):
     HOST: str
     PORT: int
 
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str
+    DB_PORT: int
+    DB_NAME: str
+
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_URL: str
 
 settings = Settings(_env_file='../.env', _env_file_encoding='utf-8')
