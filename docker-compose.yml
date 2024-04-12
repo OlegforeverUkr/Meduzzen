@@ -1,12 +1,47 @@
- version: '3'
+version: '3'
 
- services:
+services:
 
-   web:
-     build: .
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/code/app
+      - ./tests:/code/tests
+    env_file:
+      - .env
+    networks:
+      - test-network
 
-     ports:
-       - "8000:8000"
+  db:
+    image: postgres:13-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - test-network
 
-     env_file:
-       - .env
+  redis:
+    image: redis:alpine
+    env_file:
+      - .env
+    ports:
+      - "6379:${REDIS_PORT}"
+    networks:
+      - test-network
+
+
+volumes:
+  postgres_data:
+  redis_data:
+
+
+networks:
+  test-network:
+    driver: bridge
