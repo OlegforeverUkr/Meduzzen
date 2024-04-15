@@ -1,13 +1,13 @@
 from pydantic import BaseModel, EmailStr
 
 
-class UserCreate(BaseModel):
+class UserCreateSchema(BaseModel):
     username: str
     email: EmailStr
     password: str
 
 
-class User(BaseModel):
+class UserSchema(BaseModel):
     id: int
     username: str
     email: EmailStr
@@ -17,12 +17,12 @@ class User(BaseModel):
         orm_mode = True
 
 
-class SignInRequest(BaseModel):
+class SignInRequestSchema(BaseModel):
     username: str
     password: str
 
 
-class SignUpRequest(UserCreate):
+class SignUpRequestSchema(UserCreateSchema):
     pass
 
 
@@ -32,10 +32,10 @@ class UserUpdateRequest(BaseModel):
     password: str | None = None
 
 
-class UsersListResponse(BaseModel):
-    users: list[User]
+class UsersListResponseSchema(BaseModel):
+    users: list[UserSchema]
     total: int
 
 
-class UserDetailResponse(User):
+class UserDetailResponseSchema(UserSchema):
     pass
