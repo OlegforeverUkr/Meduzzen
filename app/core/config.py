@@ -19,4 +19,6 @@ class Settings(BaseSettings):
     REDIS_PORT: int
     REDIS_URL: str
 
+    SQL_URL: str
+
 settings = Settings(_env_file='../.env', _env_file_encoding='utf-8')
