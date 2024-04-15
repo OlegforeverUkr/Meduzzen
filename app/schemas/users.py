@@ -26,7 +26,7 @@ class SignUpRequestSchema(UserCreateSchema):
     pass
 
 
-class UserUpdateRequest(BaseModel):
+class UserUpdateRequestSchema(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
     password: str | None = None
