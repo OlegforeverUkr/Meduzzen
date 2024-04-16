@@ -1,55 +1,79 @@
+from asyncpg import PostgresError
+from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
+
 from app.db.models import User
 from app.schemas.users import UserCreateSchema, UserUpdateRequestSchema
 from passlib.hash import pbkdf2_sha256
+from app.services.handlers_errors import get_or_404
 import logging
 
 logger = logging.getLogger("uvicorn")
+
+
+class UserRepository:
+
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+
+    async def get_user(self, user_id: int):
+        try:
+            result = await get_or_404(session=self.session, id=user_id)
+            return result
+        except PostgresError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+
+    async def create_user(self, user: UserCreateSchema):
+        hashed_password = pbkdf2_sha256.hash(user.password)
+        try:
+            db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
+            self.session.add(db_user)
+            await self.session.commit()
+            await self.session.refresh(db_user)
+            logger.info(f"User created with ID: {db_user.id}")
+            return db_user
+        except PostgresError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+
+    async def update_user(self, user_id: int, user: UserUpdateRequestSchema):
+        try:
+            db_user = await get_or_404(session=self.session, id=user_id)
+            if db_user:
+                updated_values = user.dict(exclude_unset=True)
+                for field, value in updated_values.items():
+                    if field == "password":
+                        value = pbkdf2_sha256.hash(value)
+                    setattr(db_user, field, value)
+                    logger.info(f"User with ID: {db_user.id} changed {field} to {value}")
+                await self.session.commit()
+                await self.session.refresh(db_user)
+                logger.info(f"User with ID: {db_user.id} is updated")
+                return db_user
+            else:
+                raise HTTPException(status_code=404, detail="User not found")
+        except PostgresError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+
+    async def delete_user(self, user_id: int):
+        try:
+            db_user = await get_or_404(session=self.session, id=user_id)
+            if db_user:
+                await self.session.delete(db_user)
+                await self.session.commit()
+                logger.info(f"User is deleted")
+            else:
+                raise HTTPException(status_code=404, detail="User not found")
+        except PostgresError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
 
 
 async def get_users(db: AsyncSession, skip: int = 0, limit: int = 10):
     result = await db.execute(select(User).offset(skip).limit(limit))
     return result.scalars().all()
-
-
-async def get_user(db: AsyncSession, user_id: int):
-    result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
-
-
-async def create_user(db: AsyncSession, user: UserCreateSchema):
-    hashed_password = pbkdf2_sha256.hash(user.password)
-    db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    logger.info(f"User created with ID: {db_user.id}")
-    return db_user
-
-
-async def update_user(db: AsyncSession, user_id: int, user: UserUpdateRequestSchema):
-    db_user = await get_user(db, user_id)
-    if db_user:
-        if user.username:
-            db_user.username = user.username
-            logger.info(f"User with ID: {db_user.id} changed {db_user.username} to {user.username}")
-        if user.email:
-            db_user.email = user.email
-            logger.info(f"User with ID: {db_user.id} changed {db_user.email} to {user.email}")
-        if user.password:
-            db_user.hashed_password = pbkdf2_sha256.hash(user.password)
-            logger.info(f"User with ID: {db_user.id} changed password.")
-        await db.commit()
-        await db.refresh(db_user)
-    logger.info(f"User with ID: {db_user.id} is updated")
-    return db_user
-
-
-async def delete_user(db: AsyncSession, user_id: int):
-    db_user = await get_user(db, user_id)
-    if db_user:
-        await db.delete(db_user)
-        await db.commit()
-        logger.info(f"User is deleted")
