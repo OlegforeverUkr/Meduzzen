@@ -1,10 +1,16 @@
-from pydantic import BaseModel, EmailStr
+from typing import ClassVar
+
+from pydantic import BaseModel, EmailStr, config
+from pydantic_settings import BaseSettings
 
 
 class UserCreateSchema(BaseModel):
     username: str
     email: EmailStr
     password: str
+
+    class Config(config.ConfigDict):
+        from_attributes = True
 
 
 class UserSchema(BaseModel):
@@ -13,8 +19,8 @@ class UserSchema(BaseModel):
     email: EmailStr
     is_active: bool
 
-    class Config:
-        orm_mode = True
+    class Config(config.ConfigDict):
+        from_attributes = True
 
 
 class SignInRequestSchema(BaseModel):

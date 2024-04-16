@@ -9,3 +9,8 @@ engine = create_async_engine(DATABASE_URL, echo=True)
 
 
 AsyncSessionFactory = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+
+
+async def get_session() -> AsyncSession:
+    async with AsyncSessionFactory() as session:
+        yield session
