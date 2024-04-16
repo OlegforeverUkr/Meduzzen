@@ -1,7 +1,4 @@
-from typing import ClassVar
-
-from pydantic import BaseModel, EmailStr, config
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, EmailStr
 
 
 class UserCreateSchema(BaseModel):
@@ -9,7 +6,7 @@ class UserCreateSchema(BaseModel):
     email: EmailStr
     password: str
 
-    class Config(config.ConfigDict):
+    class Config:
         from_attributes = True
 
 
@@ -19,7 +16,7 @@ class UserSchema(BaseModel):
     email: EmailStr
     is_active: bool
 
-    class Config(config.ConfigDict):
+    class Config:
         from_attributes = True
 
 
