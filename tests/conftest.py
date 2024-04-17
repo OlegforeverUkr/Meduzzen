@@ -1,18 +1,8 @@
-import asyncio
-
 import pytest
 from httpx import AsyncClient, ASGITransport
 
-from app.db.connect_db import get_session
 from app.main import app
-
-
-@pytest.fixture
-async def event_loop():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
+from unittest.mock import MagicMock
 
 
 @pytest.fixture
@@ -21,6 +11,6 @@ def client():
 
 
 @pytest.fixture
-async def db():
-    async with get_session() as session:
-        yield session
+async def mocker():
+    session = MagicMock()
+    yield session

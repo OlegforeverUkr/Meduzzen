@@ -1,4 +1,4 @@
-from asyncpg import PostgresError
+from sqlalchemy.exc import DatabaseError
 from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +23,7 @@ class UserRepository:
         try:
             result = await get_or_404(session=self.session, id=user_id)
             return result
-        except PostgresError:
+        except DatabaseError:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
 
@@ -36,7 +36,7 @@ class UserRepository:
             await self.session.refresh(db_user)
             logger.info(f"User created with ID: {db_user.id}")
             return db_user
-        except PostgresError as e:
+        except DatabaseError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -56,7 +56,7 @@ class UserRepository:
                 return db_user
             else:
                 raise HTTPException(status_code=404, detail="User not found")
-        except PostgresError as e:
+        except DatabaseError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -69,7 +69,7 @@ class UserRepository:
                 logger.info(f"User is deleted")
             else:
                 raise HTTPException(status_code=404, detail="User not found")
-        except PostgresError as e:
+        except DatabaseError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
 
