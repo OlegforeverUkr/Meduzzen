@@ -30,6 +30,18 @@ class UserRepository:
     async def create_user(self, user: UserCreateSchema):
         hashed_password = pbkdf2_sha256.hash(user.password)
         try:
+            existing_user_with_username = await self.session.execute(
+                select(User).filter(User.username == user.username)
+            )
+            existing_user_with_email = await self.session.execute(
+                select(User).filter(User.email == user.email)
+            )
+            if existing_user_with_username.scalar():
+                raise HTTPException(status_code=400, detail="Username already exists")
+            if existing_user_with_email.scalar():
+                raise HTTPException(status_code=400, detail="Email already exists")
+
+
             db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
             self.session.add(db_user)
             await self.session.commit()
@@ -44,6 +56,20 @@ class UserRepository:
         try:
             db_user = await get_or_404(session=self.session, id=user_id)
             if db_user:
+
+                if user.username:
+                    existing_user_with_username = await self.session.execute(
+                        select(User).filter(User.username == user.username)
+                    )
+                    if existing_user_with_username.scalar() and existing_user_with_username.scalar().id != user_id:
+                        raise HTTPException(status_code=400, detail="Username already exists")
+                if user.email:
+                    existing_user_with_email = await self.session.execute(
+                        select(User).filter(User.email == user.email)
+                    )
+                    if existing_user_with_email.scalar() and existing_user_with_email.scalar().id != user_id:
+                        raise HTTPException(status_code=400, detail="Email already exists")
+
                 updated_values = user.dict(exclude_unset=True)
                 for field, value in updated_values.items():
                     if field == "password":

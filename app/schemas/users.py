@@ -1,5 +1,5 @@
 import re
-from pydantic import BaseModel, EmailStr, constr, field_validator
+from pydantic import BaseModel, EmailStr, constr, field_validator, root_validator
 
 
 class UserCreateSchema(BaseModel):
@@ -18,7 +18,7 @@ class UserCreateSchema(BaseModel):
             "strip_whitespace": True
         }
 
-    @field_validator('password')
+    @field_validator('password', mode='before')
     def validate_password(cls, value):
         if not re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$', value):
             raise ValueError('Password must contain at least 6 characters, one letter, one number, and one special character')
@@ -48,6 +48,14 @@ class UserUpdateRequestSchema(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
     password: str | None = None
+
+
+    @field_validator("username", "email", "password", mode='before')
+    def check_not_empty(cls, value):
+        if value is None:
+            raise ValueError("Value cannot be None")
+        return value
+
 
     class Config:
         from_attributes = True
