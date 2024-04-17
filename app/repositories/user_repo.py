@@ -74,6 +74,6 @@ class UserRepository:
 
 
 
-async def get_users(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(User).offset(skip).limit(limit))
-    return result.scalars().all()
+    async def get_users(self, skip: int = 0, limit: int = 10):
+        result = await self.session.execute(select(User).offset(skip).limit(limit))
+        return result.scalars().all()

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.connect_db import get_session
 from app.schemas.users import UserSchema, UserCreateSchema, UserUpdateRequestSchema
-from app.services.crud_users import get_users, UserRepository
+from app.repositories.user_repo import UserRepository
 
 router = APIRouter()
 
@@ -21,7 +21,8 @@ def health_check():
 
 @router.get(path="/users/", response_model=List[UserSchema], status_code=200)
 async def get_all_users_router(skip: int = 0, limit: int = 10, session: AsyncSession = Depends(get_session)):
-    users = await get_users(session, skip=skip, limit=limit)
+    repo = UserRepository(session=session)
+    users = await repo.get_users(skip=skip, limit=limit)
     return users
 
 

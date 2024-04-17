@@ -1,13 +1,28 @@
-from pydantic import BaseModel, EmailStr
+import re
+from pydantic import BaseModel, EmailStr, constr, field_validator
 
 
 class UserCreateSchema(BaseModel):
-    username: str
+    username: constr(min_length=2, max_length=100)
     email: EmailStr
-    password: str
+    password: constr(min_length=6)
 
     class Config:
         from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "username": "example_user",
+                "email": "user@example.com",
+                "password": "secure_password"
+            },
+            "strip_whitespace": True
+        }
+
+    @field_validator('password')
+    def validate_password(cls, value):
+        if not re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$', value):
+            raise ValueError('Password must contain at least 6 characters, one letter, one number, and one special character')
+        return value
 
 
 class UserSchema(BaseModel):
@@ -33,6 +48,15 @@ class UserUpdateRequestSchema(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
     password: str | None = None
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "min_length": 2,
+            "max_length": 100,
+            "validate_all": True,
+            "strip_whitespace": True
+        }
 
 
 class UsersListResponseSchema(BaseModel):
