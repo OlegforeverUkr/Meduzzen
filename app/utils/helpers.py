@@ -15,7 +15,7 @@ async def check_user_by_username_exist(session: AsyncSession, username: str, use
     )
     user = existing_user.scalar()
     if user:
-        if user_id is None or (user_id is not None and user.id != user_id):
+        if not user_id or user.id != user_id:
             raise HTTPException(status_code=409, detail="Username already exists")
 
 
@@ -25,6 +25,5 @@ async def check_user_by_email_exist(session: AsyncSession, email: str, user_id: 
     )
     user = existing_user.scalar()
     if user:
-        if user_id is None or (user_id is not None and user.id != user_id):
+        if not user_id or user.id != user_id:
             raise HTTPException(status_code=409, detail="Email already exists")
-
