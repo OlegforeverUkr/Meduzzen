@@ -1,5 +1,5 @@
-import re
-from pydantic import BaseModel, EmailStr, constr, field_validator, root_validator
+from pydantic import BaseModel, EmailStr, constr, field_validator
+from app.utils.helpers import password_valid
 
 
 class UserCreateSchema(BaseModel):
@@ -20,9 +20,16 @@ class UserCreateSchema(BaseModel):
 
     @field_validator('password', mode='before')
     def validate_password(cls, value):
-        if not re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$', value):
+        if not password_valid.match(value):
             raise ValueError('Password must contain at least 6 characters, one letter, one number, and one special character')
         return value
+
+    @field_validator('username', mode='before')
+    def validate_username(cls, value):
+        username = value.replace(" ", "")
+        if len(username) < 2:
+            raise ValueError('Username must contain at least 2 characters')
+        return username
 
 
 class UserSchema(BaseModel):
@@ -50,11 +57,26 @@ class UserUpdateRequestSchema(BaseModel):
     password: str | None = None
 
 
-    @field_validator("username", "email", "password", mode='before')
+    @field_validator("email", mode='before')
     def check_not_empty(cls, value):
-        if value is None:
+        if not value:
             raise ValueError("Value cannot be None")
         return value
+
+
+    @field_validator('password', mode='before')
+    def validate_password(cls, value):
+        if not password_valid.match(value):
+            raise ValueError('Password must contain at least 6 characters, one letter, one number, and one special character')
+        return value
+
+
+    @field_validator('username', mode='before')
+    def validate_username(cls, value):
+        username = value.replace(" ", "")
+        if len(username) < 2:
+            raise ValueError('Username must contain at least 2 characters')
+        return username
 
 
     class Config:

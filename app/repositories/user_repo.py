@@ -8,6 +8,7 @@ from app.db.models import User
 from app.schemas.users import UserCreateSchema, UserUpdateRequestSchema
 from passlib.hash import pbkdf2_sha256
 from app.services.handlers_errors import get_or_404
+from app.utils.helpers import check_user_by_username_exist, check_user_by_email_exist
 import logging
 
 logger = logging.getLogger("uvicorn")
@@ -30,17 +31,8 @@ class UserRepository:
     async def create_user(self, user: UserCreateSchema):
         hashed_password = pbkdf2_sha256.hash(user.password)
         try:
-            existing_user_with_username = await self.session.execute(
-                select(User).filter(User.username == user.username)
-            )
-            existing_user_with_email = await self.session.execute(
-                select(User).filter(User.email == user.email)
-            )
-            if existing_user_with_username.scalar():
-                raise HTTPException(status_code=400, detail="Username already exists")
-            if existing_user_with_email.scalar():
-                raise HTTPException(status_code=400, detail="Email already exists")
-
+            await check_user_by_username_exist(self.session, user.username)
+            await check_user_by_email_exist(self.session, user.email)
 
             db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
             self.session.add(db_user)
@@ -56,19 +48,10 @@ class UserRepository:
         try:
             db_user = await get_or_404(session=self.session, id=user_id)
             if db_user:
-
                 if user.username:
-                    existing_user_with_username = await self.session.execute(
-                        select(User).filter(User.username == user.username)
-                    )
-                    if existing_user_with_username.scalar() and existing_user_with_username.scalar().id != user_id:
-                        raise HTTPException(status_code=400, detail="Username already exists")
+                    await check_user_by_username_exist(self.session, user.username, user_id)
                 if user.email:
-                    existing_user_with_email = await self.session.execute(
-                        select(User).filter(User.email == user.email)
-                    )
-                    if existing_user_with_email.scalar() and existing_user_with_email.scalar().id != user_id:
-                        raise HTTPException(status_code=400, detail="Email already exists")
+                    await check_user_by_email_exist(self.session, user.email, user_id)
 
                 updated_values = user.dict(exclude_unset=True)
                 for field, value in updated_values.items():

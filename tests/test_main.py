@@ -23,7 +23,3 @@ async def test_create_user(client, mocker):
     assert response.status_code == 201
     assert response.json()["username"] == user_data["username"]
     assert response.json()["email"] == user_data["email"]
-
-    user_id = response.json()["id"]
-    await client.delete(f"/users/{user_id}")
-
