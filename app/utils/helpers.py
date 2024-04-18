@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from app.db.models import User
 
 
-password_valid = re.compile(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$')
+password_valid_regex = re.compile(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$')
 
 
 async def check_user_by_username_exist(session: AsyncSession, username: str, user_id: int = None) -> None:

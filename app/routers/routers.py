@@ -40,7 +40,7 @@ async def create_user_router(user: UserCreateSchema, session: AsyncSession = Dep
     return new_user
 
 
-@router.put(path="/users/{user_id}", response_model=UserSchema, status_code=200)
+@router.patch(path="/users/{user_id}", response_model=UserSchema, status_code=200)
 async def update_user_router(user_id: int, user: UserUpdateRequestSchema, session: AsyncSession = Depends(get_session)):
     repo = UserRepository(session=session)
     updated_user = await repo.update_user(user_id=user_id, user=user)
