@@ -71,5 +71,5 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 
 @router.get("/me", response_model=Token)
-async def sample_endpoint_under_jwt(current_user: User = Depends(get_current_user_from_token)):
+async def get_user_from_token_router(current_user: User = Depends(get_current_user_from_token)):
     return {"Success": True, "current_user": current_user}

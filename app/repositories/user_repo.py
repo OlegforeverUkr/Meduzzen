@@ -6,7 +6,7 @@ from starlette import status
 
 from app.db.models import User
 from app.schemas.users import UserCreateSchema, UserUpdateRequestSchema
-from passlib.hash import pbkdf2_sha256
+
 from app.services.handlers_errors import get_or_404
 from app.services.password_hash import PasswordHasher
 from app.utils.helpers import check_user_by_username_exist, check_user_by_email_exist, get_user_by_username
