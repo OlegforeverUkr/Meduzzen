@@ -8,7 +8,8 @@ from app.db.models import User
 from app.schemas.users import UserCreateSchema, UserUpdateRequestSchema
 from passlib.hash import pbkdf2_sha256
 from app.services.handlers_errors import get_or_404
-from app.utils.helpers import check_user_by_username_exist, check_user_by_email_exist
+from app.services.password_hash import PasswordHasher
+from app.utils.helpers import check_user_by_username_exist, check_user_by_email_exist, get_user_by_username
 import logging
 
 logger = logging.getLogger("uvicorn")
@@ -29,7 +30,7 @@ class UserRepository:
 
 
     async def create_user(self, user: UserCreateSchema):
-        hashed_password = pbkdf2_sha256.hash(user.password)
+        hashed_password = PasswordHasher.get_password_hash(user.password)
         try:
             await check_user_by_username_exist(self.session, user.username)
             await check_user_by_email_exist(self.session, user.email)
@@ -56,7 +57,7 @@ class UserRepository:
                 updated_values = user.dict(exclude_unset=True)
                 for field, value in updated_values.items():
                     if field == "password":
-                        value = pbkdf2_sha256.hash(value)
+                        value = PasswordHasher.get_password_hash(value)
                     setattr(db_user, field, value)
                     logger.info(f"User with ID: {db_user.id} changed {field} to {value}")
                 await self.session.commit()
@@ -86,3 +87,12 @@ class UserRepository:
     async def get_users(self, skip: int = 0, limit: int = 10):
         result = await self.session.execute(select(User).offset(skip).limit(limit))
         return result.scalars().all()
+
+
+    async def save_user_token(self, token: str, username: str):
+        try:
+            db_user = await get_user_by_username(session=self.session, username=username)
+            db_user.token = token
+            await self.session.commit()
+        except DatabaseError as e:
+            raise HTTPException(status_code=400, detail=str(e))
