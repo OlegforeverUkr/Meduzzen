@@ -38,3 +38,14 @@ async def get_user_by_username(session: AsyncSession, username: str) -> User:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+
+async def get_user_by_email(session: AsyncSession, user_email: str) -> User:
+    getting_user = await session.execute(
+        select(User).filter(User.email == user_email)
+    )
+    user = getting_user.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user

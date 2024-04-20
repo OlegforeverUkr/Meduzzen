@@ -63,7 +63,7 @@ async def delete_user_router(user_id: int, session: AsyncSession = Depends(get_s
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
     user = await authenticate_user(form_data.username, form_data.password, session)
 
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.email})
     repo = UserRepository(session=session)
     await repo.save_user_token(token=access_token, username=form_data.username)
 

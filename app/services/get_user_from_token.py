@@ -6,9 +6,7 @@ from starlette import status
 
 from app.core.config import settings
 from app.db.connect_db import get_session
-from app.utils.helpers import get_user_by_username
-
-
+from app.utils.helpers import get_user_by_email
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
@@ -22,12 +20,12 @@ async def get_current_user_from_token(session: AsyncSession = Depends(get_sessio
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.AUTH0_ALGORITHMS]
         )
-        username: str = payload.get("sub")
-        if username is None:
+        user_email: str = payload.get("sub")
+        if user_email is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = await get_user_by_username(session=session, username=username)
+    user = await get_user_by_email(session=session, user_email=user_email)
     if user is None:
         raise credentials_exception
     return user
