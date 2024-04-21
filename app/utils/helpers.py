@@ -34,7 +34,7 @@ async def get_user_by_username(session: AsyncSession, username: str) -> User:
     getting_user = await session.execute(
         select(User).filter(User.username == username)
     )
-    user = getting_user.scalars().first()
+    user = getting_user.scalar()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
