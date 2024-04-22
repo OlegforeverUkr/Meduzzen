@@ -10,4 +10,3 @@ class User(Base):
     hashed_password = Column(String(128), nullable=False)
     is_active = Column(Boolean, default=True)
 
-    token = Column(String(256), unique=True, nullable=True)

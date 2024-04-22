@@ -11,12 +11,10 @@ from app.repositories.user_repo import UserRepository
 from app.services.auth import authenticate_user
 from app.services.create_token import create_access_token
 from app.services.get_user_from_token import get_current_user_from_token
-from fastapi.security import HTTPBearer
 
 from app.utils.token_verify import VerifyToken
 
 router = APIRouter()
-token_aut_scheme = HTTPBearer()
 
 auth = VerifyToken()
 
@@ -68,18 +66,13 @@ async def delete_user_router(user_id: int, session: AsyncSession = Depends(get_s
 @router.post(path="/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
     user = await authenticate_user(form_data.username, form_data.password, session)
-
-    access_token = create_access_token(data={"sub": user.email})
-    repo = UserRepository(session=session)
-    await repo.save_user_token(token=access_token, username=form_data.username)
-
-    return {"access_token": access_token, "token_type": "bearer"}
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    return Token(access_token= access_token, token_type= "bearer")
 
 
 @router.get(path="/me", response_model=UserSchema)
 async def get_user_from_token_router(current_user: User = Depends(get_current_user_from_token)):
     return current_user
-
 
 
 @router.get("/private")

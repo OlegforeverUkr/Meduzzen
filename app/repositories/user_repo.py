@@ -9,7 +9,7 @@ from app.schemas.users import UserCreateSchema, UserUpdateRequestSchema
 
 from app.services.handlers_errors import get_or_404
 from app.services.password_hash import PasswordHasher
-from app.utils.helpers import check_user_by_username_exist, check_user_by_email_exist, get_user_by_username
+from app.utils.helpers import check_user_by_username_exist, check_user_by_email_exist
 import logging
 
 logger = logging.getLogger("uvicorn")
@@ -46,41 +46,44 @@ class UserRepository:
 
 
     async def update_user(self, user_id: int, user: UserUpdateRequestSchema):
-        try:
-            db_user = await get_or_404(session=self.session, id=user_id)
-            if db_user:
-                if user.username:
-                    await check_user_by_username_exist(self.session, user.username, user_id)
-                if user.email:
-                    await check_user_by_email_exist(self.session, user.email, user_id)
+        db_user = await get_or_404(session=self.session, id=user_id)
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-                updated_values = user.dict(exclude_unset=True)
-                for field, value in updated_values.items():
-                    if field == "password":
-                        value = PasswordHasher.get_password_hash(value)
-                    setattr(db_user, field, value)
-                    logger.info(f"User with ID: {db_user.id} changed {field} to {value}")
-                await self.session.commit()
-                await self.session.refresh(db_user)
-                logger.info(f"User with ID: {db_user.id} is updated")
-                return db_user
-            else:
-                raise HTTPException(status_code=404, detail="User not found")
-        except DatabaseError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+        if db_user:
+            if user.username:
+                await check_user_by_username_exist(self.session, user.username, user_id)
+            if user.email:
+                await check_user_by_email_exist(self.session, user.email, user_id)
+
+            updated_values = user.dict(exclude_unset=True)
+            for field, value in updated_values.items():
+                if field not in db_user.__dict__:
+                    raise ValueError(f"Field '{field}' does not exist in user object.")
+
+                if field == "password":
+                    value = PasswordHasher.get_password_hash(value)
+                setattr(db_user, field, value)
+
+            await self.session.commit()
+            await self.session.refresh(db_user)
+            logger.info(f"User with ID: {db_user.id} is updated")
+            return db_user
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
 
 
     async def delete_user(self, user_id: int):
-        try:
-            db_user = await get_or_404(session=self.session, id=user_id)
-            if db_user:
-                await self.session.delete(db_user)
-                await self.session.commit()
-                logger.info(f"User is deleted")
-            else:
-                raise HTTPException(status_code=404, detail="User not found")
-        except DatabaseError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+        db_user = await get_or_404(session=self.session, id=user_id)
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if db_user:
+            await self.session.delete(db_user)
+            await self.session.commit()
+            logger.info(f"User is deleted")
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
 
 
 
@@ -89,10 +92,23 @@ class UserRepository:
         return result.scalars().all()
 
 
-    async def save_user_token(self, token: str, username: str):
-        try:
-            db_user = await get_user_by_username(session=self.session, username=username)
-            db_user.token = token
-            await self.session.commit()
-        except DatabaseError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+
+    async def get_user_by_username(self, username: str):
+        getting_user = await self.session.execute(
+            select(User).filter(User.username == username)
+        )
+        user = getting_user.scalar()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+
+
+
+    async def get_user_by_email(self, user_email: str):
+        getting_user = await self.session.execute(
+            select(User).filter(User.email == user_email)
+        )
+        user = getting_user.scalars().first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
