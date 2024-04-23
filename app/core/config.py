@@ -25,8 +25,9 @@ class Settings(BaseSettings):
     AUTH0_API_AUDIENCE: str
     AUTH0_ISSUER: str
     AUTH0_ALGORITHMS: str
+    AUTH0_CLIENT_ID: str
 
-    SECRET_KEY: str
+    SIGNING_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
 settings = Settings(_env_file='../.env', _env_file_encoding='utf-8')

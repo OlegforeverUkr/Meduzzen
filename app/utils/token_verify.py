@@ -24,7 +24,7 @@ class VerifyToken:
         try:
             payload = jwt.decode(
                 token.credentials,
-                settings.SECRET_KEY,
+                settings.SIGNING_KEY,
                 algorithms=[settings.AUTH0_ALGORITHMS],
                 audience=settings.AUTH0_API_AUDIENCE,
                 issuer=settings.AUTH0_ISSUER,

@@ -16,7 +16,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 async def get_current_user_from_token(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)):
     try:
-        payload = jwt.decode(token, key=settings.SECRET_KEY, algorithms=[settings.AUTH0_ALGORITHMS])
+        payload = jwt.decode(token, key=settings.SIGNING_KEY, algorithms=[settings.AUTH0_ALGORITHMS])
         user_id: str = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user id from token")
