@@ -32,8 +32,8 @@ class UserRepository:
     async def create_user(self, user: UserCreateSchema):
         hashed_password = PasswordHasher.get_password_hash(user.password)
         try:
-            await check_user_by_username_exist(self.session, user.username)
-            await check_user_by_email_exist(self.session, user.email)
+            if await check_user_by_username_exist(self.session, user.username) or await check_user_by_email_exist(self.session, user.email):
+                raise HTTPException(status_code=409, detail="User already exists")
 
             db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
             self.session.add(db_user)
@@ -51,10 +51,8 @@ class UserRepository:
             raise HTTPException(status_code=404, detail="User not found")
 
         if db_user:
-            if user.username:
-                await check_user_by_username_exist(self.session, user.username, user_id)
-            if user.email:
-                await check_user_by_email_exist(self.session, user.email, user_id)
+            if await check_user_by_username_exist(self.session, user.username) or await check_user_by_email_exist(self.session, user.email):
+                raise HTTPException(status_code=409, detail="User already exists")
 
             updated_values = user.dict(exclude_unset=True)
             for field, value in updated_values.items():
