@@ -1,14 +1,13 @@
 from datetime import datetime
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from fastapi.security import HTTPBearer
 from jose import ExpiredSignatureError, JWTError
 import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
+
 
 from app.core.config import settings
 from app.db.connect_db import get_session
-from app.repositories.user_repo import UserRepository
 from app.utils.exeptions_auth import UnauthorizedException
 from app.utils.helpers import check_user_by_email_exist
 from app.services.crate_user_from_token import create_user_from_auth_token

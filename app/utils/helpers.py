@@ -1,9 +1,7 @@
 import re
 
-from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from fastapi import HTTPException
 from app.db.models import User
 
 
