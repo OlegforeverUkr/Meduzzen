@@ -54,8 +54,7 @@ async def create_user_router(user: UserCreateSchema, session: AsyncSession = Dep
 @router.patch(path="/users/{user_id}", response_model=UserSchema, status_code=200)
 async def update_user_router(user_id: int, user: UserUpdateRequestSchema,
                              session: AsyncSession = Depends(get_session),
-                             current_user: User = Depends(get_current_user_from_token)):
-    await verify_user_permission(user_id=user_id, current_user=current_user)
+                             current_user: User = Depends(verify_user_permission)):
     repo = UserRepository(session=session)
     updated_user = await repo.update_user(user_id=user_id, user=user)
     return updated_user
@@ -65,8 +64,7 @@ async def update_user_router(user_id: int, user: UserUpdateRequestSchema,
 @router.delete(path="/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_router(user_id: int,
                              session: AsyncSession = Depends(get_session),
-                             current_user: User = Depends(get_current_user_from_token)):
-    await verify_user_permission(user_id=user_id, current_user=current_user)
+                             current_user: User = Depends(verify_user_permission)):
     await UserRepository(session=session).delete_user(user_id=user_id)
 
 
