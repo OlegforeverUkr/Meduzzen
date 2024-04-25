@@ -9,7 +9,7 @@ from app.db.models import User
 from app.schemas.users import UserSchema, UserCreateSchema, UserUpdateRequestSchema, Token
 from app.repositories.user_repo import UserRepository
 from app.services.auth import authenticate_user
-from app.services.chek_user_permisssions import verify_user_permission
+from app.services.check_user_permissions import verify_user_permission
 from app.services.create_token import create_access_token
 from app.services.get_user_from_token import get_current_user_from_token
 
@@ -51,21 +51,19 @@ async def create_user_router(user: UserCreateSchema, session: AsyncSession = Dep
     return new_user
 
 
-@router.patch(path="/users/{user_id}", response_model=UserSchema, status_code=200)
-async def update_user_router(user_id: int, user: UserUpdateRequestSchema,
+@router.patch(path="/users/{user_id}", response_model=UserSchema, status_code=200, dependencies=[Depends(verify_user_permission)])
+async def update_user_router(user: UserUpdateRequestSchema,
                              session: AsyncSession = Depends(get_session),
-                             current_user: User = Depends(verify_user_permission)):
+                             current_user: User = Depends(get_current_user_from_token)):
     repo = UserRepository(session=session)
-    updated_user = await repo.update_user(user_id=user_id, user=user)
+    updated_user = await repo.update_user(user_id=current_user.id, user=user)
     return updated_user
 
 
 
-@router.delete(path="/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user_router(user_id: int,
-                             session: AsyncSession = Depends(get_session),
-                             current_user: User = Depends(verify_user_permission)):
-    await UserRepository(session=session).delete_user(user_id=user_id)
+@router.delete(path="/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(verify_user_permission)])
+async def delete_user_router(session: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user_from_token)):
+    await UserRepository(session=session).delete_user(user_id=current_user.id)
 
 
 
