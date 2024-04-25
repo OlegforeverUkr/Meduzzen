@@ -9,6 +9,7 @@ from app.db.models import User
 from app.schemas.users import UserSchema, UserCreateSchema, UserUpdateRequestSchema, Token
 from app.repositories.user_repo import UserRepository
 from app.services.auth import authenticate_user
+from app.services.chek_user_permisssions import verify_user_permission
 from app.services.create_token import create_access_token
 from app.services.get_user_from_token import get_current_user_from_token
 
@@ -54,8 +55,9 @@ async def create_user_router(user: UserCreateSchema, session: AsyncSession = Dep
 async def update_user_router(user_id: int, user: UserUpdateRequestSchema,
                              session: AsyncSession = Depends(get_session),
                              current_user: User = Depends(get_current_user_from_token)):
+    await verify_user_permission(user_id=user_id, current_user=current_user)
     repo = UserRepository(session=session)
-    updated_user = await repo.update_user(user_id=user_id, user=user, current_user=current_user)
+    updated_user = await repo.update_user(user_id=user_id, user=user)
     return updated_user
 
 
@@ -64,7 +66,8 @@ async def update_user_router(user_id: int, user: UserUpdateRequestSchema,
 async def delete_user_router(user_id: int,
                              session: AsyncSession = Depends(get_session),
                              current_user: User = Depends(get_current_user_from_token)):
-    await UserRepository(session=session).delete_user(user_id=user_id, current_user=current_user)
+    await verify_user_permission(user_id=user_id, current_user=current_user)
+    await UserRepository(session=session).delete_user(user_id=user_id)
 
 
 
