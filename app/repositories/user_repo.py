@@ -45,22 +45,25 @@ class UserRepository:
             raise HTTPException(status_code=400, detail=str(e))
 
 
-    async def update_user(self, user_id: int, user: UserUpdateRequestSchema):
+    async def update_user(self, user_id: int, user: UserUpdateRequestSchema, current_user: User):
         db_user = await get_or_404(session=self.session, id=user_id)
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        if current_user.id != db_user.id:
+            raise HTTPException(status_code=400, detail="User can only update his personal data")
+
         if db_user:
-            if await check_user_by_username_exist(self.session, user.username) or await check_user_by_email_exist(self.session, user.email):
-                raise HTTPException(status_code=409, detail="User already exists")
+            if await check_user_by_username_exist(self.session, user.username, user_id=user_id):
+                raise HTTPException(status_code=409, detail="Username already exists")
 
             updated_values = user.dict(exclude_unset=True)
             for field, value in updated_values.items():
-                if field not in db_user.__dict__:
-                    raise ValueError(f"Field '{field}' does not exist in user object.")
-
-                if field == "password":
+                if field == "password" and value is not None:
                     value = PasswordHasher.get_password_hash(value)
+
+                if field == "email":
+                    raise ValueError("You cannot change your email")
                 setattr(db_user, field, value)
 
             await self.session.commit()
@@ -71,10 +74,12 @@ class UserRepository:
             raise HTTPException(status_code=404, detail="User not found")
 
 
-    async def delete_user(self, user_id: int):
+    async def delete_user(self, user_id: int, current_user: User):
         db_user = await get_or_404(session=self.session, id=user_id)
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
+        if current_user.id != db_user.id:
+            raise HTTPException(status_code=400, detail="User can only delete his personal data")
 
         if db_user:
             await self.session.delete(db_user)
