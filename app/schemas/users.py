@@ -98,3 +98,9 @@ class UsersListResponseSchema(BaseModel):
 
 class UserDetailResponseSchema(UserSchema):
     pass
+
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

@@ -1,13 +1,22 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Security
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.connect_db import get_session
-from app.schemas.users import UserSchema, UserCreateSchema, UserUpdateRequestSchema
+from app.db.models import User
+from app.schemas.users import UserSchema, UserCreateSchema, UserUpdateRequestSchema, Token
 from app.repositories.user_repo import UserRepository
+from app.services.auth import authenticate_user
+from app.services.create_token import create_access_token
+from app.services.get_user_from_token import get_current_user_from_token
+
+from app.utils.token_verify import VerifyToken
 
 router = APIRouter()
+
+auth = VerifyToken()
 
 
 @router.get("/")
@@ -51,3 +60,21 @@ async def update_user_router(user_id: int, user: UserUpdateRequestSchema, sessio
 @router.delete(path="/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_router(user_id: int, session: AsyncSession = Depends(get_session)):
     await UserRepository(session=session).delete_user(user_id=user_id)
+
+
+
+@router.post(path="/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
+    user = await authenticate_user(form_data.username, form_data.password, session)
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    return Token(access_token= access_token, token_type= "bearer")
+
+
+@router.get(path="/me", response_model=UserSchema)
+async def get_user_from_token_router(current_user: User = Depends(get_current_user_from_token)):
+    return current_user
+
+
+@router.get("/private")
+async def private(auth_result: str = Security(auth.verify)):
+    return auth_result
