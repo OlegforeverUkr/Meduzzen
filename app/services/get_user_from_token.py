@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.db.connect_db import get_session
 from app.utils.exeptions_auth import UnauthorizedException
 from app.utils.helpers import check_user_by_email_exist
-from app.services.crate_user_from_token import create_user_from_auth_token
+from app.services.create_user_from_token import create_user_from_auth_token
 
 oauth2_scheme = HTTPBearer()
 

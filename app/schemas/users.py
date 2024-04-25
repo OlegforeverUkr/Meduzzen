@@ -55,15 +55,7 @@ class SignUpRequestSchema(UserCreateSchema):
 
 class UserUpdateRequestSchema(BaseModel):
     username: str | None = None
-    email: EmailStr | None = None
     password: str | None = None
-
-
-    @field_validator("email", mode='before')
-    def check_not_empty(cls, value):
-        if not value:
-            raise ValueError("Value cannot be None")
-        return value
 
 
     @field_validator('password', mode='before')

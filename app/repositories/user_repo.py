@@ -51,16 +51,14 @@ class UserRepository:
             raise HTTPException(status_code=404, detail="User not found")
 
         if db_user:
-            if await check_user_by_username_exist(self.session, user.username) or await check_user_by_email_exist(self.session, user.email):
-                raise HTTPException(status_code=409, detail="User already exists")
-
             updated_values = user.dict(exclude_unset=True)
-            for field, value in updated_values.items():
-                if field not in db_user.__dict__:
-                    raise ValueError(f"Field '{field}' does not exist in user object.")
 
-                if field == "password":
+            for field, value in updated_values.items():
+                if field == "password" and value is not None:
                     value = PasswordHasher.get_password_hash(value)
+
+                if field == "email":
+                    raise ValueError("You cannot change your email")
                 setattr(db_user, field, value)
 
             await self.session.commit()
@@ -84,11 +82,9 @@ class UserRepository:
             raise HTTPException(status_code=404, detail="User not found")
 
 
-
     async def get_users(self, skip: int = 0, limit: int = 10):
         result = await self.session.execute(select(User).offset(skip).limit(limit))
         return result.scalars().all()
-
 
 
     async def get_user_by_username(self, username: str):
@@ -99,7 +95,6 @@ class UserRepository:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return user
-
 
 
     async def get_user_by_email(self, user_email: str):
