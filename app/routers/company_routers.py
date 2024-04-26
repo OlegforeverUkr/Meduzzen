@@ -15,9 +15,9 @@ company_routers = APIRouter()
 
 
 @company_routers.get(path="/companies/", response_model=List[CompanySchema])
-async def list_companies_router(session: AsyncSession = Depends(get_session)):
+async def list_companies_router(skip: int = 0, limit: int = 10, session: AsyncSession = Depends(get_session)):
     company_repo = CompanyRepository(session=session)
-    companies = await company_repo.get_companies()
+    companies = await company_repo.get_companies(skip=skip, limit=limit)
     return companies
 
 
@@ -35,13 +35,7 @@ async def create_company(company_data: CompanyCreateSchema,
                          current_user: User = Depends(get_current_user_from_token)):
     company_repo = CompanyRepository(session=session)
     new_company = await company_repo.create_company(company=company_data, current_user=current_user)
-    return CompanySchema(
-        id=new_company.id,
-        company_name=new_company.company_name,
-        description=new_company.description,
-        owner=new_company.owner,
-        visibility=new_company.visibility
-    )
+    return new_company
 
 
 @company_routers.patch(path="/companies/{company_id}/",
@@ -55,13 +49,7 @@ async def update_company(
     company_repo = CompanyRepository(session=session)
     updated_company = await company_repo.update_company(company_id=company_id,
                                                   company=company_data)
-    return CompanySchema(
-        id=updated_company.id,
-        company_name=updated_company.company_name,
-        description=updated_company.description,
-        owner=updated_company.owner,
-        visibility=updated_company.visibility
-    )
+    return updated_company
 
 
 @company_routers.delete(path="/companies/{company_id}/",

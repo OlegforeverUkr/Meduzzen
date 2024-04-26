@@ -16,7 +16,7 @@ class CompanySchema(BaseModel):
     company_name: str
     description: str
     owner: UserSchema
-    visibility: str
+    visibility: Visibility
 
 
 class CompanyCreateSchema(BaseModel):
@@ -31,7 +31,7 @@ class CompanyCreateSchema(BaseModel):
             "example": {
                 "company_name": "company name",
                 "description": "description of company",
-                "visibility": "secure_password"
+                "visibility": "'public' or 'private'"
             }
         }
 

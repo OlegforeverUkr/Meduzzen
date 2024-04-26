@@ -19,8 +19,14 @@ class CompanyRepository:
         self.session = session
 
 
-    async def get_companies(self):
-        query = select(Company).options(joinedload(Company.owner))
+    async def get_companies(self, skip: int = 0, limit: int = 10,):
+        query = (
+            select(Company)
+            .options(joinedload(Company.owner))
+            .filter(Company.visibility == "public")
+            .offset(skip)
+            .limit(limit)
+        )
         result = await self.session.execute(query)
         return result.scalars().all()
 
