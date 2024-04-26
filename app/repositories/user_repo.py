@@ -7,7 +7,7 @@ from starlette import status
 from app.db.models import User
 from app.schemas.users import UserCreateSchema, UserUpdateRequestSchema
 
-from app.services.handlers_errors import get_or_404
+from app.services.handlers_errors import get_user_or_404
 from app.services.password_hash import PasswordHasher
 from app.utils.helpers import check_user_by_username_exist, check_user_by_email_exist
 import logging
@@ -23,7 +23,7 @@ class UserRepository:
 
     async def get_user(self, user_id: int):
         try:
-            result = await get_or_404(session=self.session, id=user_id)
+            result = await get_user_or_404(session=self.session, id=user_id)
             return result
         except DatabaseError:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -46,7 +46,7 @@ class UserRepository:
 
 
     async def update_user(self, user_id: int, user: UserUpdateRequestSchema):
-        db_user = await get_or_404(session=self.session, id=user_id)
+        db_user = await get_user_or_404(session=self.session, id=user_id)
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -70,7 +70,7 @@ class UserRepository:
 
 
     async def delete_user(self, user_id: int):
-        db_user = await get_or_404(session=self.session, id=user_id)
+        db_user = await get_user_or_404(session=self.session, id=user_id)
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
 

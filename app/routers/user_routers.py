@@ -15,12 +15,12 @@ from app.services.get_user_from_token import get_current_user_from_token
 
 from app.utils.token_verify import VerifyToken
 
-router = APIRouter()
+user_router = APIRouter()
 
 auth = VerifyToken()
 
 
-@router.get("/")
+@user_router.get("/")
 def health_check():
     return {
         "status_code": 200,
@@ -29,7 +29,7 @@ def health_check():
     }
 
 
-@router.get(path="/users/", response_model=List[UserSchema], status_code=200)
+@user_router.get(path="/users/", response_model=List[UserSchema], status_code=200)
 async def get_all_users_router(skip: int = 0, limit: int = 10,
                                session: AsyncSession = Depends(get_session)):
     repo = UserRepository(session=session)
@@ -37,21 +37,21 @@ async def get_all_users_router(skip: int = 0, limit: int = 10,
     return users
 
 
-@router.get(path="/users/{user_id}", response_model=UserSchema, status_code=200)
+@user_router.get(path="/users/{user_id}", response_model=UserSchema, status_code=200)
 async def get_user_router(user_id: int, session: AsyncSession = Depends(get_session)):
     repo = UserRepository(session=session)
     user = await repo.get_user(user_id=user_id)
     return user
 
 
-@router.post(path="/users/", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+@user_router.post(path="/users/", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
 async def create_user_router(user: UserCreateSchema, session: AsyncSession = Depends(get_session)):
     repo = UserRepository(session=session)
     new_user = await repo.create_user(user=user)
     return new_user
 
 
-@router.patch(path="/users/{user_id}", response_model=UserSchema, status_code=200, dependencies=[Depends(verify_user_permission)])
+@user_router.patch(path="/users/{user_id}", response_model=UserSchema, status_code=200, dependencies=[Depends(verify_user_permission)])
 async def update_user_router(user: UserUpdateRequestSchema,
                              session: AsyncSession = Depends(get_session),
                              current_user: User = Depends(get_current_user_from_token)):
@@ -61,24 +61,24 @@ async def update_user_router(user: UserUpdateRequestSchema,
 
 
 
-@router.delete(path="/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(verify_user_permission)])
+@user_router.delete(path="/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(verify_user_permission)])
 async def delete_user_router(session: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user_from_token)):
     await UserRepository(session=session).delete_user(user_id=current_user.id)
 
 
 
-@router.post(path="/token", response_model=Token)
+@user_router.post(path="/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
     user = await authenticate_user(form_data.username, form_data.password, session)
     access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
     return Token(access_token= access_token, token_type= "bearer")
 
 
-@router.get(path="/me", response_model=UserSchema)
+@user_router.get(path="/me", response_model=UserSchema)
 async def get_user_from_token_router(current_user: User = Depends(get_current_user_from_token)):
     return current_user
 
 
-@router.get("/private")
+@user_router.get("/private")
 async def private(auth_result: str = Security(auth.verify)):
     return auth_result
