@@ -1,7 +1,8 @@
 from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-
+from app.utils.visability import VisibilityEnum
 from app.db.base_model import Base
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 
 
 class User(Base):
@@ -20,7 +21,7 @@ class Company(Base):
 
     company_name = Column(String(128), unique=True, index=True, nullable=False)
     description = Column(String(128), nullable=False)
-    visibility = Column(String(10), nullable=False)
+    visibility = Column(PgEnum(VisibilityEnum, name="visibility", create_type=True), nullable=False, default=VisibilityEnum.PUBLIC)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="owner_companies")

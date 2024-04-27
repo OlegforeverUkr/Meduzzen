@@ -3,12 +3,12 @@ from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from starlette import status
 
 from app.db.models import Company, User
 from app.schemas.company import CompanyCreateSchema, CompanyUpdateSchema
 import logging
 from app.services.handlers_errors import get_company_or_404
+from app.utils.visability import VisibilityEnum
 
 logger = logging.getLogger("uvicorn")
 
@@ -23,7 +23,7 @@ class CompanyRepository:
         query = (
             select(Company)
             .options(joinedload(Company.owner))
-            .filter(Company.visibility == "public")
+            .filter(Company.visibility == VisibilityEnum.PUBLIC)
             .offset(skip)
             .limit(limit)
         )
@@ -31,24 +31,24 @@ class CompanyRepository:
         return result.scalars().all()
 
 
-    async def get_company(self, company_id: int):
-        try:
-            result = await get_company_or_404(session=self.session, id=company_id)
-            return result
-        except DatabaseError:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+    async def get_company(self, company_id: int, current_user: User):
+        company = await get_company_or_404(session=self.session, id=company_id)
+        if company.visibility == 'PRIVATE' and company.owner_id != current_user.id:
+            raise HTTPException(status_code=404, detail="You are not the owner of this company")
+        return company
+
 
 
     async def create_company(self, company: CompanyCreateSchema, current_user: User):
         try:
             db_company = Company(company_name=company.company_name,
                                  description=company.description,
-                                 visibility=company.visibility,
+                                 visibility=VisibilityEnum(company.visibility),
                                  owner_id=current_user.id)
             self.session.add(db_company)
             await self.session.commit()
             await self.session.refresh(db_company)
-            logger.info(f"Company created with ID: {db_company.id}, owner: {current_user.id}")
+            logger.info(f"Company created with ID: {db_company.id}")
             return db_company
         except DatabaseError as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -56,12 +56,12 @@ class CompanyRepository:
 
     async def update_company(self, company_id: int, company: CompanyUpdateSchema):
         db_company = await get_company_or_404(session=self.session, id=company_id)
-        if not db_company:
-            raise HTTPException(status_code=404, detail="Company not found")
 
         if db_company:
             updated_values = company.dict(exclude_unset=True)
             for field, value in updated_values.items():
+                if field == 'visibility':
+                    value = VisibilityEnum(value)
                 setattr(db_company, field, value)
 
             await self.session.commit()
@@ -74,8 +74,6 @@ class CompanyRepository:
 
     async def delete_company(self, company_id: int):
         db_company = await get_company_or_404(session=self.session, id=company_id)
-        if not db_company:
-            raise HTTPException(status_code=404, detail="Company not found")
 
         if db_company:
             await self.session.delete(db_company)

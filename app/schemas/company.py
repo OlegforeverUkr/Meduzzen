@@ -1,4 +1,4 @@
-from enum import Enum
+from app.utils.visability import VisibilityEnum
 from pydantic import BaseModel, field_validator
 from app.schemas.users import UserSchema
 
@@ -6,23 +6,18 @@ from app.schemas.users import UserSchema
 MIN_LEN = 5
 
 
-class Visibility(str, Enum):
-    private = "private"
-    public = "public"
-
-
 class CompanySchema(BaseModel):
     id: int
     company_name: str
     description: str
     owner: UserSchema
-    visibility: Visibility
+    visibility: VisibilityEnum
 
 
 class CompanyCreateSchema(BaseModel):
     company_name: str
     description: str
-    visibility: Visibility
+    visibility: VisibilityEnum
 
     class Config:
         from_attributes = True
@@ -49,7 +44,7 @@ class CompanyCreateSchema(BaseModel):
 class CompanyUpdateSchema(BaseModel):
     company_name: str | None = None
     description: str | None = None
-    visibility: Visibility | None = None
+    visibility: VisibilityEnum | None = None
 
     class Config:
         from_attributes = True
@@ -58,7 +53,7 @@ class CompanyUpdateSchema(BaseModel):
             "example": {
                 "company_name": "company name",
                 "description": "description of company",
-                "visibility": "secure_password"
+                "visibility": "'public' or 'private'"
             }
         }
 

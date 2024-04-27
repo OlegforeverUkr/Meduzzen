@@ -22,9 +22,9 @@ async def list_companies_router(skip: int = 0, limit: int = 10, session: AsyncSe
 
 
 @company_routers.get(path="/companies/{company_id}/", response_model=CompanySchema)
-async def get_company_by_id(company_id: int, session: AsyncSession = Depends(get_session)):
+async def get_company_by_id(company_id: int, session: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user_from_token)):
     company_repo = CompanyRepository(session=session)
-    company = await company_repo.get_company(company_id=company_id)
+    company = await company_repo.get_company(company_id=company_id, current_user=current_user)
     return company
 
 
