@@ -38,10 +38,11 @@ class UserSchema(BaseModel):
     id: int
     username: str
     email: EmailStr
-    is_active: bool
+    is_admin: bool
 
     class Config:
         from_attributes = True
+        arbitrary_types_allowed = True
 
 
 class SignInRequestSchema(BaseModel):
