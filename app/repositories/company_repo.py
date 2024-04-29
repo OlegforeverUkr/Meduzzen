@@ -1,13 +1,14 @@
 from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
-from app.db.models import Company, User
-from app.schemas.company import CompanyCreateSchema, CompanyUpdateSchema
+from app.db.models import Company, User, CompanyMember
+from app.schemas.company import CompanyCreateSchema, CompanyUpdateSchema, CompanySchema
 import logging
+
 from app.services.handlers_errors import get_company_or_404
 from app.utils.helpers import check_company_name_exist
+from app.utils.roles_users import RoleEnum
 from app.utils.visability import VisibilityEnum
 
 logger = logging.getLogger("uvicorn")
@@ -19,23 +20,44 @@ class CompanyRepository:
         self.session = session
 
 
-    async def get_companies(self, skip: int = 0, limit: int = 10,):
+    async def get_companies(self, skip: int = 0, limit: int = 10):
         query = (
-            select(Company)
-            .options(joinedload(Company.owner))
+            select(Company, User.username)
+            .join(Company.members)
+            .join(User, User.id == CompanyMember.user_id)
             .filter(Company.visibility == VisibilityEnum.PUBLIC)
             .offset(skip)
             .limit(limit)
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        companies = []
+        for company, username in result:
+            companies.append({
+                'id': company.id,
+                'company_name': company.company_name,
+                'description': company.description,
+                'owner': username,
+                'visibility': company.visibility
+            })
+        return companies
 
 
     async def get_company(self, company_id: int, current_user: User):
         company = await get_company_or_404(session=self.session, id=company_id)
-        if company.visibility == 'PRIVATE' and company.owner_id != current_user.id:
-            raise HTTPException(status_code=404, detail="You are not the owner of this company")
-        return company
+
+        company_member = await self.session.execute(
+            select(CompanyMember)
+            .filter(CompanyMember.company_id == company_id, CompanyMember.user_id == current_user.id)
+        )
+
+        if not company_member:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return CompanySchema(id=company.id,
+                             company_name=company.company_name,
+                             description=company.description,
+                             visibility=company.visibility,
+                             owner=current_user.username)
 
 
 
@@ -44,13 +66,23 @@ class CompanyRepository:
 
         db_company = Company(company_name=company.company_name,
                              description=company.description,
-                             visibility=VisibilityEnum(company.visibility),
-                             owner_id=current_user.id)
+                             visibility=VisibilityEnum(company.visibility))
+
+        company_member = CompanyMember(user_id=current_user.id, role=RoleEnum.OWNER)
+        db_company.members.append(company_member)
+
         self.session.add(db_company)
         await self.session.commit()
         await self.session.refresh(db_company)
+
+        company_schema = CompanySchema(
+            id=db_company.id,
+            company_name=db_company.company_name,
+            description=db_company.description,
+            visibility=db_company.visibility,
+            owner=current_user.username)
         logger.info(f"Company created with ID: {db_company.id}")
-        return db_company
+        return company_schema
 
 
 

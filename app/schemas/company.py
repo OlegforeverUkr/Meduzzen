@@ -1,6 +1,8 @@
+from typing import List
+
+from app.db.models import CompanyMember
 from app.utils.visability import VisibilityEnum
 from pydantic import BaseModel, field_validator
-from app.schemas.users import UserSchema
 
 
 MIN_LEN = 5
@@ -10,8 +12,11 @@ class CompanySchema(BaseModel):
     id: int
     company_name: str
     description: str
-    owner: UserSchema
+    owner: str
     visibility: VisibilityEnum
+
+    class Config:
+        response_model_exclude_unset = True
 
 
 class CompanyCreateSchema(BaseModel):

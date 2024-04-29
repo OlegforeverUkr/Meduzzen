@@ -16,7 +16,7 @@ async def get_user_or_404(session, **kwargs):
 
 
 async def get_company_or_404(session, **kwargs):
-    query = select(Company).options(joinedload(Company.owner)).where(Company.id == kwargs.get('id'))
+    query = select(Company).where(Company.id == kwargs.get('id'))
     result = await session.execute(query)
     instance = result.scalars().first()
     if not instance:
