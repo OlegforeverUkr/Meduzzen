@@ -1,4 +1,3 @@
-from sqlalchemy.exc import DatabaseError
 from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +7,7 @@ from app.db.models import Company, User
 from app.schemas.company import CompanyCreateSchema, CompanyUpdateSchema
 import logging
 from app.services.handlers_errors import get_company_or_404
+from app.utils.helpers import check_company_name_exist
 from app.utils.visability import VisibilityEnum
 
 logger = logging.getLogger("uvicorn")
@@ -40,18 +40,18 @@ class CompanyRepository:
 
 
     async def create_company(self, company: CompanyCreateSchema, current_user: User):
-        try:
-            db_company = Company(company_name=company.company_name,
-                                 description=company.description,
-                                 visibility=VisibilityEnum(company.visibility),
-                                 owner_id=current_user.id)
-            self.session.add(db_company)
-            await self.session.commit()
-            await self.session.refresh(db_company)
-            logger.info(f"Company created with ID: {db_company.id}")
-            return db_company
-        except DatabaseError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+        await check_company_name_exist(session=self.session, company_name=company.company_name)
+
+        db_company = Company(company_name=company.company_name,
+                             description=company.description,
+                             visibility=VisibilityEnum(company.visibility),
+                             owner_id=current_user.id)
+        self.session.add(db_company)
+        await self.session.commit()
+        await self.session.refresh(db_company)
+        logger.info(f"Company created with ID: {db_company.id}")
+        return db_company
+
 
 
     async def update_company(self, company_id: int, company: CompanyUpdateSchema):
