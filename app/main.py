@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.routers.company_routers import company_routers
+from app.routers.invite_routers import invite_routers
 from app.routers.user_routers import user_router
 from app.core.config import settings
 from app.core.middleware import setup_cors
@@ -12,6 +13,7 @@ app = FastAPI()
 setup_cors(app=app)
 app.include_router(router=user_router)
 app.include_router(router=company_routers)
+app.include_router(router=invite_routers)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uvicorn")
 

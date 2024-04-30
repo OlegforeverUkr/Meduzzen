@@ -1,5 +1,7 @@
 from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
 from sqlalchemy.orm import relationship
+
+from app.utils.invite_status import InviteStatusEnum
 from app.utils.visability import VisibilityEnum
 from app.db.base_model import Base
 from sqlalchemy.dialects.postgresql import ENUM as PgEnum
@@ -37,3 +39,16 @@ class CompanyMember(Base):
 
     user = relationship("User", back_populates="companies")
     company = relationship("Company", back_populates="members")
+
+
+class InviteUser(Base):
+    __tablename__ = "invites"
+
+    invite_from = Column(Integer, ForeignKey("users.id"), nullable=False)
+    invite_to = Column(Integer, ForeignKey("users.id"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    status = Column(PgEnum(InviteStatusEnum), nullable=False, default=InviteStatusEnum.REQUEST)
+
+    user = relationship("User", foreign_keys=[invite_to])
+    inviter = relationship("User", foreign_keys=[invite_from])
+    company = relationship("Company")

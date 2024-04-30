@@ -1,6 +1,3 @@
-from typing import List
-
-from app.db.models import CompanyMember
 from app.utils.visability import VisibilityEnum
 from pydantic import BaseModel, field_validator
 

@@ -113,3 +113,5 @@ class CompanyRepository:
             logger.info(f"Company is deleted")
         else:
             raise HTTPException(status_code=404, detail="Company not found")
+
+
