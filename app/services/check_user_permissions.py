@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.connect_db import get_session
 from app.db.models import User, CompanyMember
 from app.services.get_user_from_token import get_current_user_from_token
-from app.services.handlers_errors import get_company_or_404
 
 
 async def verify_user_permission(user_id: int, current_user: User = Depends(get_current_user_from_token)):

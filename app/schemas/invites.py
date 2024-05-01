@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from app.utils.invite_status import InviteStatusEnum
+from app.enums.invite_status import InviteStatusEnum
 
 
 class InviteUserSchema(BaseModel):

@@ -1,4 +1,4 @@
-from app.utils.visability import VisibilityEnum
+from app.enums.visability import VisibilityEnum
 from pydantic import BaseModel, field_validator
 
 

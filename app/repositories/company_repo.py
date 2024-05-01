@@ -6,10 +6,11 @@ from app.db.models import Company, User, CompanyMember
 from app.schemas.company import CompanyCreateSchema, CompanyUpdateSchema, CompanySchema
 import logging
 
+from app.services.company_services import CompanyServices
 from app.services.handlers_errors import get_company_or_404
 from app.utils.helpers import check_company_name_exist
-from app.utils.roles_users import RoleEnum
-from app.utils.visability import VisibilityEnum
+from app.enums.roles_users import RoleEnum
+from app.enums.visability import VisibilityEnum
 
 logger = logging.getLogger("uvicorn")
 
@@ -30,16 +31,8 @@ class CompanyRepository:
             .limit(limit)
         )
         result = await self.session.execute(query)
-        companies = []
-        for company, username in result:
-            companies.append({
-                'id': company.id,
-                'company_name': company.company_name,
-                'description': company.description,
-                'owner': username,
-                'visibility': company.visibility
-            })
-        return companies
+        companies_list = await CompanyServices.get_companies_from_query(result)
+        return companies_list
 
 
     async def get_company(self, company_id: int, current_user: User):
