@@ -46,8 +46,8 @@ class InviteUser(Base):
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
-    status = Column(PgEnum(InviteStatusEnum, name="invite status", create_type=True), nullable=False, default=InviteStatusEnum.REQUEST)
-    type_invite = Column(PgEnum(InviteTypeEnum, name="invite type", create_type=True), nullable=False)
+    status = Column(PgEnum(InviteStatusEnum), nullable=False, default=InviteStatusEnum.REQUEST)
+    type_invite = Column(PgEnum(InviteTypeEnum), nullable=False)
 
     user = relationship("User", foreign_keys=[user_id])
     company = relationship("Company")

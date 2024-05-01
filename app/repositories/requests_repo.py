@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.db.models import User, InviteUser, CompanyMember
+from app.db.models import User, InviteUser, CompanyMember, Company
 from app.enums.invite_status import InviteTypeEnum, InviteStatusEnum
 from app.enums.roles_users import RoleEnum
 from app.repositories.user_repo import UserRepository
@@ -83,8 +83,10 @@ class RequestsRepository:
 
         if not current_user_info or current_user_info.role != RoleEnum.OWNER:
             raise HTTPException(status_code=403, detail="Permission denied: You can only accept requests to join your company")
+        company = await self.session.get(Company, invite.company_id)
+        company_member = CompanyMember(user=current_user, company=company, role=RoleEnum.MEMBER)
+        self.session.add(company_member)
 
-        invite.status = InviteStatusEnum.ACCEPTED
         await self.session.commit()
 
 
