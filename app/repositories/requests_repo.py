@@ -1,13 +1,8 @@
 from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
 
-from app.db.models import User, InviteUser, CompanyMember, Company
-from app.enums.invite_status import InviteTypeEnum, InviteStatusEnum
-from app.enums.roles_users import RoleEnum
-from app.repositories.user_repo import UserRepository
-from app.schemas.invites import InviteUserSchema, InviteCreateSchema
+from app.db.models import User, InviteUser
+from app.schemas.invites import InviteCreateSchema
 from app.services.handlers_errors import get_company_or_404
 from app.services.requests_services import RequestService
 

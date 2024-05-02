@@ -7,7 +7,7 @@ from app.schemas.company import CompanyCreateSchema, CompanyUpdateSchema, Compan
 import logging
 
 from app.services.company_services import CompanyServices
-from app.services.handlers_errors import get_company_or_404
+from app.services.handlers_errors import get_company_or_404, get_user_or_404
 from app.utils.helpers import check_company_name_exist
 from app.enums.roles_users import RoleEnum
 from app.enums.visability import VisibilityEnum
@@ -108,3 +108,35 @@ class CompanyRepository:
             raise HTTPException(status_code=404, detail="Company not found")
 
 
+    async def create_admin_for_company_repo(self, user_id: int, company_id: int):
+        db_company = await get_company_or_404(session=self.session, id=company_id)
+        db_user = await get_user_or_404(session=self.session, id=user_id)
+
+        if db_company and db_user:
+            new_admin = CompanyMember(user_id=db_user.id, company_id=db_company.id, role=RoleEnum.ADMIN)
+            self.session.add(new_admin)
+            await self.session.commit()
+            return db_user
+        else:
+            raise HTTPException(status_code=404, detail="Company or user not found")
+
+
+    async def get_all_company_admins_repo(self, company_id: int):
+        db_company = await get_company_or_404(session=self.session, id=company_id)
+
+        if db_company:
+            query = (
+                select(User)
+                .join(CompanyMember)
+                .filter(
+                    CompanyMember.company_id == company_id,
+                    CompanyMember.role == RoleEnum.ADMIN
+                )
+            )
+            result = await self.session.execute(query)
+            admins = result.scalars().all()
+            if not admins:
+                raise HTTPException(status_code=404, detail="No admins found for the company")
+            return admins
+        else:
+            raise HTTPException(status_code=404, detail="Company not found")

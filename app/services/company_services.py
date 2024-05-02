@@ -3,7 +3,7 @@
 class CompanyServices:
 
     @staticmethod
-    async def get_companies_from_query(self, query):
+    async def get_companies_from_query(query):
         companies = []
 
         for company, username in query:
