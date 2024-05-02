@@ -22,19 +22,19 @@ async def create_invite(invite: InviteCreateSchema,
     return new_invite
 
 
-@invite_routers.get("/requests/", response_model=List[InviteUserSchema])
-async def get_user_requests(session: AsyncSession = Depends(get_session),
-                           current_user: User = Depends(get_current_user_from_token)):
-    user_requests = await RequestsRepository(session).get_all_user_requests(current_user=current_user)
-    return user_requests
-
-
 @invite_routers.post("/requests/", response_model=InviteUserSchema)
 async def create_requests(invite: InviteCreateSchema,
                           session: AsyncSession = Depends(get_session),
                           current_user: User = Depends(get_current_user_from_token)):
     new_invite = await RequestsRepository(session).create_request(invite, current_user)
     return new_invite
+
+
+@invite_routers.get("/requests/", response_model=List[InviteUserSchema])
+async def get_user_requests(session: AsyncSession = Depends(get_session),
+                           current_user: User = Depends(get_current_user_from_token)):
+    user_requests = await RequestsRepository(session).get_all_user_requests(current_user=current_user)
+    return user_requests
 
 
 @invite_routers.get("/incoming_invites/", response_model=List[InviteUserSchema])
@@ -90,3 +90,11 @@ async def delete_invite(invite_id: int,
                         current_user: User = Depends(get_current_user_from_token)):
     await InviteRepository(session).delete_invite_or_request(invite_id=invite_id, current_user=current_user)
     return {"message": "Invite deleted successfully"}
+
+
+@invite_routers.delete("/requests/{invite_id}/")
+async def delete_request(invite_id: int,
+                        session: AsyncSession = Depends(get_session),
+                        current_user: User = Depends(get_current_user_from_token)):
+    await RequestsRepository(session).delete_request(invite_id=invite_id, current_user=current_user)
+    return {"message": "Request deleted successfully"}
