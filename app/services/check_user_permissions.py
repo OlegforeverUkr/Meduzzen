@@ -33,14 +33,12 @@ async def verify_company_permissions(company_id: int,
 
 
 
-async def verify_company_owner(company_id: int,
-                               session: AsyncSession = Depends(get_session),
+async def verify_company_owner(session: AsyncSession = Depends(get_session),
                                current_user: User = Depends(get_current_user_from_token)):
     result = await session.execute(
         select(CompanyMember).filter(
-            CompanyMember.company_id == company_id,
+            CompanyMember.user_id == current_user.id,
             CompanyMember.role == RoleEnum.OWNER,
-            CompanyMember.user_id == current_user.id
         )
     )
 

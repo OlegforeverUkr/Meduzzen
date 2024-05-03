@@ -108,15 +108,14 @@ class CompanyRepository:
             raise HTTPException(status_code=404, detail="Company not found")
 
 
-    async def create_admin_for_company_repo(self, user_id: int, company_id: int):
-        db_company = await get_company_or_404(session=self.session, id=company_id)
-        db_user = await get_user_or_404(session=self.session, id=user_id)
+    async def create_admin_for_company_repo(self, company_member_id: int):
+        company_member = await self.session.get(CompanyMember, company_member_id)
 
-        if db_company and db_user:
-            new_admin = CompanyMember(user_id=db_user.id, company_id=db_company.id, role=RoleEnum.ADMIN)
-            self.session.add(new_admin)
+        if company_member:
+            company_member.role = RoleEnum.ADMIN
             await self.session.commit()
-            return db_user
+            new_admin = await self.session.get(User, company_member.user_id)
+            return new_admin
         else:
             raise HTTPException(status_code=404, detail="Company or user not found")
 
@@ -138,5 +137,25 @@ class CompanyRepository:
             if not admins:
                 raise HTTPException(status_code=404, detail="No admins found for the company")
             return admins
+        else:
+            raise HTTPException(status_code=404, detail="Company not found")
+
+
+    async def get_all_company_members_repo(self, company_id: int):
+        db_company = await get_company_or_404(session=self.session, id=company_id)
+
+        if db_company:
+            query = (
+                select(User)
+                .join(CompanyMember)
+                .filter(
+                    CompanyMember.company_id == company_id
+                )
+            )
+            result = await self.session.execute(query)
+            members = result.scalars().all()
+            if not members:
+                raise HTTPException(status_code=404, detail="No members found for the company")
+            return members
         else:
             raise HTTPException(status_code=404, detail="Company not found")

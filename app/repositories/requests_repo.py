@@ -37,14 +37,10 @@ class RequestsRepository:
 
 
     async def accept_request(self, invite_id: int, current_user: User):
-        try:
-            await RequestService.accept_request_service(session=self.session,
-                                                        invite_id=invite_id,
-                                                        current_user=current_user)
-        except HTTPException:
-            pass
-        else:
-            return {"message": "Request accepted successfully"}
+        await RequestService.accept_request_service(session=self.session,
+                                                    invite_id=invite_id,
+                                                    current_user=current_user)
+
 
 
     async def reject_request(self, invite_id: int, current_user: User):
@@ -52,14 +48,10 @@ class RequestsRepository:
         if not invite:
             raise HTTPException(status_code=404, detail="Request not found")
         else:
-            try:
-                await RequestService.reject_invite_service(session=self.session,
-                                                           invite=invite,
-                                                           current_user=current_user)
-            except HTTPException:
-                pass
-            else:
-                return {"message": "Request rejected successfully"}
+            await RequestService.reject_invite_service(session=self.session,
+                                                       invite=invite,
+                                                       current_user=current_user)
+
 
 
     async def delete_request(self, invite_id: int, current_user: User):

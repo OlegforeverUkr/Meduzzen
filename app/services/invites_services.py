@@ -41,11 +41,11 @@ class InvitesServices:
         incoming_invites = await session.execute(
             select(InviteUser)
             .where(InviteUser.user_id == current_user.id)
-            .options(joinedload(InviteUser.inviter), joinedload(InviteUser.company))
+            .options(joinedload(InviteUser.user), joinedload(InviteUser.company))
         )
         return [InviteUserSchema(
             id=invite[0].id,
-            user=invite[0].inviter.username,
+            user=invite[0].user.username,
             company=invite[0].company.company_name,
             status=invite[0].status.value
         ) for invite in incoming_invites.fetchall()]

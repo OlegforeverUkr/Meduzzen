@@ -53,12 +53,11 @@ async def update_company(
     return updated_company
 
 
-@company_routers.patch(path="/companies/{user_id}/{company_id}/",
+@company_routers.post(path="/companies/{company_member_id}/",
                        response_model=  UserSchema,
                        dependencies=[Depends(verify_company_owner)])
-async def create_admin_for_company(user_id: int, company_id: int,
-                                   session: AsyncSession = Depends(get_session)):
-    new_admin = await CompanyRepository(session).create_admin_for_company_repo(user_id=user_id, company_id=company_id)
+async def create_admin_for_company(company_member_id: int, session: AsyncSession = Depends(get_session)):
+    new_admin = await CompanyRepository(session).create_admin_for_company_repo(company_member_id=company_member_id)
     return new_admin
 
 
@@ -66,6 +65,13 @@ async def create_admin_for_company(user_id: int, company_id: int,
                      dependencies=[Depends(verify_company_permissions)])
 async def get_all_company_admins(company_id: int, session: AsyncSession = Depends(get_session)):
     all_admins = await CompanyRepository(session).get_all_company_admins_repo(company_id=company_id)
+    return all_admins
+
+
+@company_routers.get(path="/companies/{company_id}/members", response_model=list[UserSchema],
+                     dependencies=[Depends(verify_company_permissions)])
+async def get_all_company_members(company_id: int, session: AsyncSession = Depends(get_session)):
+    all_admins = await CompanyRepository(session).get_all_company_members_repo(company_id=company_id)
     return all_admins
 
 

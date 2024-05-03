@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.db.models import InviteUser, CompanyMember, Company
+from app.db.models import InviteUser, CompanyMember, Company, User
 from app.enums.invite_status import InviteTypeEnum, InviteStatusEnum
 from app.enums.roles_users import RoleEnum
 from app.repositories.user_repo import UserRepository
@@ -70,14 +70,16 @@ class RequestService:
 
         current_user_info = await session.execute(
             select(CompanyMember)
-            .where((CompanyMember.user_id == current_user.id) & (CompanyMember.company_id == invite.company_id))
+            .filter(CompanyMember.company_id == invite.company_id)
+            .filter(CompanyMember.user_id == current_user.id)
         )
         current_user_info = current_user_info.scalar_one_or_none()
 
         if not current_user_info or current_user_info.role != RoleEnum.OWNER:
             raise HTTPException(status_code=403, detail="Permission denied: You can only accept requests to join your company")
         company = await session.get(Company, invite.company_id)
-        company_member = CompanyMember(user=current_user, company=company, role=RoleEnum.MEMBER)
+        user_invite = await session.get(User, invite.user_id)
+        company_member = CompanyMember(user=user_invite, company=company, role=RoleEnum.MEMBER)
         session.add(company_member)
 
         await session.commit()
