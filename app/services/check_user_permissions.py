@@ -49,3 +49,22 @@ async def verify_company_owner(session: AsyncSession = Depends(get_session),
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not the owner of this company",
         )
+
+
+
+async def verify_company_owner_or_admin(session: AsyncSession = Depends(get_session),
+                                        current_user: User = Depends(get_current_user_from_token)):
+    result = await session.execute(
+        select(CompanyMember).filter(
+            (CompanyMember.user_id == current_user.id) &
+            ((CompanyMember.role == RoleEnum.OWNER) | (CompanyMember.role == RoleEnum.ADMIN))
+        )
+    )
+
+    company_member = result.scalar_one_or_none()
+
+    if not company_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not the owner or admin of this company",
+        )

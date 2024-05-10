@@ -1,15 +1,18 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.db.connect_db import get_session
 from app.db.models import User
 from app.repositories.company_repo import CompanyRepository
+from app.repositories.quizze_repo import QuizRepository
 from app.schemas.company import CompanySchema, CompanyCreateSchema, CompanyUpdateSchema
+from app.schemas.quizzes import QuizCreateSchema, QuizReadSchema, QuizUpdateSchema, QuizBaseSchema
 from app.schemas.users import UserSchema
-from app.services.check_user_permissions import verify_company_permissions, verify_company_owner
+from app.services.check_user_permissions import verify_company_permissions, verify_company_owner, \
+    verify_company_owner_or_admin
 from app.services.get_user_from_token import get_current_user_from_token
 
 company_routers = APIRouter()
@@ -81,4 +84,54 @@ async def get_all_company_members(company_id: int, session: AsyncSession = Depen
 async def delete_company(company_id: int, session: AsyncSession = Depends(get_session)):
     await CompanyRepository(session=session).delete_company(company_id=company_id)
 
+# _____________________________________________________________________________________________________
 
+@company_routers.post(path="/companies/{company_id}/quizzes/",
+                      response_model=QuizBaseSchema,
+                      status_code=status.HTTP_201_CREATED,
+                      dependencies=[Depends(verify_company_owner_or_admin)])
+async def create_quiz_for_company(
+    company_id: int,
+    quiz_data: QuizCreateSchema,
+    session: AsyncSession = Depends(get_session)):
+    quiz_repo = QuizRepository(session=session)
+    new_quiz = await quiz_repo.create_quiz(company_id=company_id, quiz_data=quiz_data)
+    return new_quiz
+
+
+@company_routers.get(path="/companies/{company_id}/quizzes/",
+                     response_model=list[QuizReadSchema],
+                     dependencies=[Depends(verify_company_permissions)])
+async def get_quizzes_for_company(
+    company_id: int,
+    skip: int = 0,
+    limit: int = 10,
+    session: AsyncSession = Depends(get_session)
+):
+    quiz_repo = QuizRepository(session=session)
+    quizzes = await quiz_repo.get_quizzes_for_company(company_id=company_id, skip=skip, limit=limit)
+    return quizzes
+
+
+@company_routers.patch(path="/quizzes/{quiz_id}/",
+                       response_model=QuizReadSchema,
+                       dependencies=[Depends(verify_company_owner_or_admin)])
+async def update_quiz(
+    quiz_id: int,
+    quiz_data: QuizUpdateSchema,
+    session: AsyncSession = Depends(get_session)
+):
+    quiz_repo = QuizRepository(session=session)
+    updated_quiz = await quiz_repo.update_quiz(quiz_id=quiz_id, quiz_data=quiz_data)
+    return updated_quiz
+
+
+@company_routers.delete(path="/quizzes/{quiz_id}/",
+                        status_code=status.HTTP_204_NO_CONTENT,
+                        dependencies=[Depends(verify_company_owner_or_admin)])
+async def delete_quiz(quiz_id: int,
+                      session: AsyncSession = Depends(get_session)):
+    quiz_repo = QuizRepository(session=session)
+    deleted = await quiz_repo.delete_quiz(quiz_id=quiz_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")

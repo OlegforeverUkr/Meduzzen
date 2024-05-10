@@ -1,7 +1,7 @@
 """Add Invite column
 
 Revision ID: 9303fbc7bc3f
-Revises: 587b4bd5f4a0
+Revises: d4516204ea71
 Create Date: 2024-04-30 12:06:59.341919
 
 """
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '9303fbc7bc3f'
-down_revision: Union[str, None] = '587b4bd5f4a0'
+down_revision: Union[str, None] = 'd4516204ea71'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

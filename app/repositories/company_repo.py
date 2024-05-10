@@ -7,7 +7,7 @@ from app.schemas.company import CompanyCreateSchema, CompanyUpdateSchema, Compan
 import logging
 
 from app.services.company_services import CompanyServices
-from app.services.handlers_errors import get_company_or_404, get_user_or_404
+from app.services.handlers_errors import get_company_or_404
 from app.utils.helpers import check_company_name_exist
 from app.enums.roles_users import RoleEnum
 from app.enums.visability import VisibilityEnum

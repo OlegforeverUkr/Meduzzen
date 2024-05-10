@@ -6,6 +6,7 @@ from app.enums.visability import VisibilityEnum
 from app.db.base_model import Base
 from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from app.enums.roles_users import RoleEnum
+from app.schemas.quizzes import QuizReadSchema
 
 
 class User(Base):
@@ -27,12 +28,12 @@ class Company(Base):
     visibility = Column(PgEnum(VisibilityEnum, name="visibility", create_type=True), nullable=False, default=VisibilityEnum.PUBLIC)
 
     members = relationship("CompanyMember", back_populates="company", cascade="all, delete")
+    quizzes = relationship("Quiz", back_populates="company")
 
 
 class CompanyMember(Base):
     __tablename__ = "company_members"
 
-    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     role = Column(PgEnum(RoleEnum, name="role", create_type=True), nullable=False, default=RoleEnum.OWNER)
@@ -51,3 +52,36 @@ class InviteUser(Base):
 
     user = relationship("User", foreign_keys=[user_id])
     company = relationship("Company")
+
+
+
+class Quiz(Base):
+    __tablename__ = "quizzes"
+
+    title = Column(String, nullable=False)
+    description = Column(String)
+    frequency_days = Column(Integer, nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"))
+
+    company = relationship("Company", back_populates="quizzes")
+    questions = relationship("Question", back_populates="quiz", cascade="all, delete", lazy="selectin")
+
+
+class Question(Base):
+    __tablename__ = "questions"
+
+    text = Column(String, nullable=False)
+    quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"))
+
+    quiz = relationship("Quiz", back_populates="questions")
+    options = relationship("Option", back_populates="question", cascade="all, delete", lazy="selectin")
+
+
+class Option(Base):
+    __tablename__ = "options"
+
+    text = Column(String, nullable=False)
+    is_correct = Column(Boolean, nullable=False)
+    question_id = Column(Integer, ForeignKey("questions.id", ondelete="CASCADE"))
+
+    question = relationship("Question", back_populates="options")
