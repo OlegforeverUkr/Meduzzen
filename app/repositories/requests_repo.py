@@ -62,7 +62,3 @@ class RequestsRepository:
             return {"message": "Invite deleted successfully"}
         else:
             raise HTTPException(status_code=403, detail="Permission denied: You can only delete request that you sent")
-
-
-
-
