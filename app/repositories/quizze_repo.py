@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +8,8 @@ from sqlalchemy.orm import selectinload
 from starlette import status
 
 from app.db.models import Quiz, Question, Option
-from app.schemas.quizzes import QuizUpdateSchema, QuizCreateSchema, QuizBaseSchema, QuestionBaseSchema, OptionBaseSchema
+from app.schemas.quizzes import QuizUpdateSchema, QuizCreateSchema, QuizBaseSchema, QuestionBaseSchema, \
+    OptionBaseSchema, QuestionUpdateSchema
 from app.services.handlers_errors import validate_quiz_data
 
 
@@ -94,10 +97,62 @@ class QuizRepository:
             raise HTTPException(status_code=400, detail=f"Validation quiz error: {e}")
 
 
+    async def update_questions(self, quiz_id: int, question_data_list: List[QuestionUpdateSchema]):
+        quiz = (
+            select(Quiz)
+            .options(selectinload(Quiz.questions).selectinload(Question.options))
+            .where(Quiz.id == quiz_id)
+        )
+        quiz_result = await self.session.execute(quiz)
+        quiz = quiz_result.scalar_one_or_none()
+
+        if not quiz:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
+        try:
+            for question_data in question_data_list:
+                if not question_data.options and not question_data.id:
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                        detail=f"Not transferred ID question or options for create new question")
+
+                if not question_data.id:
+                    new_question = Question(text=question_data.text, quiz_id=quiz.id)
+                    self.session.add(new_question)
+
+                    for option_data in question_data.options:
+                        new_option = Option(text=option_data.text, is_correct=option_data.is_correct,
+                                            question_id=new_question.id)
+                        self.session.add(new_option)
+                else:
+                    question = next((q for q in quiz.questions if q.id == question_data.id), None)
+                    if question:
+                        question.text = question_data.text
+
+                        if question_data.options:
+                            for option_data in question_data.options:
+                                if option_data.id:
+                                    option = next((o for o in question.options if o.id == option_data.id), None)
+                                    if option:
+                                        option.text = option_data.text
+                                        option.is_correct = option_data.is_correct
+                                    else:
+                                        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                                            detail=f"Option with ID {option_data.id} not found")
+                                else:
+                                    new_option = Option(text=option_data.text, is_correct=option_data.is_correct,
+                                                        question_id=question.id)
+                                    self.session.add(new_option)
+                    else:
+                        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                            detail=f"Question with ID {question_data.id} not found")
+            await self.session.commit()
+            return quiz
+        except ValidationError as e:
+            raise HTTPException(status_code=400, detail=f"Validation error: {e}")
+
+
     async def delete_quiz(self, quiz_id: int):
         quiz = await self.session.get(Quiz, quiz_id)
         if not quiz:
-            return False
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
         await self.session.delete(quiz)
         await self.session.commit()
-        return True

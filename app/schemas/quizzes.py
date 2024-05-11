@@ -19,14 +19,25 @@ class OptionSchema(OptionBaseSchema):
         from_attributes = True
 
 
+class OptionUpdateSchema(BaseModel):
+    id: int = None
+    text: str
+    is_correct: bool
+
+
 class QuestionBaseSchema(BaseModel):
     text: str
     options: List[OptionBaseSchema]
 
 
-
 class QuestionCreateSchema(QuestionBaseSchema):
     pass
+
+
+class QuestionUpdateSchema(BaseModel):
+    id: int = None
+    text: str
+    options: List[OptionUpdateSchema] = None
 
 
 class QuestionSchema(QuestionBaseSchema):

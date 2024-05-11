@@ -52,16 +52,18 @@ async def verify_company_owner(session: AsyncSession = Depends(get_session),
 
 
 
-async def verify_company_owner_or_admin(session: AsyncSession = Depends(get_session),
+async def verify_company_owner_or_admin(company_id: int,
+                                        session: AsyncSession = Depends(get_session),
                                         current_user: User = Depends(get_current_user_from_token)):
     result = await session.execute(
         select(CompanyMember).filter(
             (CompanyMember.user_id == current_user.id) &
+            (CompanyMember.company_id == company_id) &
             ((CompanyMember.role == RoleEnum.OWNER) | (CompanyMember.role == RoleEnum.ADMIN))
         )
     )
 
-    company_member = result.scalar_one_or_none()
+    company_member = result.scalars().first()
 
     if not company_member:
         raise HTTPException(
