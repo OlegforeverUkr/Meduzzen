@@ -7,6 +7,11 @@ class OptionBaseSchema(BaseModel):
     is_correct: bool
 
 
+class OptionReadSchema(BaseModel):
+    id: int
+    text: str
+
+
 class OptionCreateSchema(OptionBaseSchema):
     pass
 
@@ -26,8 +31,9 @@ class OptionUpdateSchema(BaseModel):
 
 
 class QuestionBaseSchema(BaseModel):
+    id: int
     text: str
-    options: List[OptionBaseSchema]
+    options: List[OptionReadSchema]
 
 
 class QuestionCreateSchema(QuestionBaseSchema):
