@@ -53,7 +53,7 @@ async def quiz_average_score(quiz_id: int, session: AsyncSession = Depends(get_s
                     dependencies=[Depends(verify_user_permission)])
 async def user_average_score(user_id: int, session: AsyncSession = Depends(get_session)):
     repository = ResultsRepository(session)
-    average_score = repository.get_user_average_score(user_id)
+    average_score = await repository.get_user_average_score(user_id)
     return average_score
 
 
@@ -62,5 +62,5 @@ async def user_average_score(user_id: int, session: AsyncSession = Depends(get_s
                     dependencies=[Depends(verify_company_owner_or_admin)])
 async def company_average_score(company_id: int, session: AsyncSession = Depends(get_session)):
     repository = ResultsRepository(session)
-    average_score = repository.get_company_average_score(company_id)
+    average_score = await repository.get_company_average_score(company_id)
     return average_score

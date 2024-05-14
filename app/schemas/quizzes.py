@@ -31,7 +31,6 @@ class OptionUpdateSchema(BaseModel):
 
 
 class QuestionBaseSchema(BaseModel):
-    id: int
     text: str
     options: List[OptionBaseSchema]
 

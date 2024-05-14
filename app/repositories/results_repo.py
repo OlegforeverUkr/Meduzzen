@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette import status
 
-from app.db.models import Quiz, QuizResult
+from app.db.models import Quiz, QuizResult, Option
 from app.schemas.result_quizes import QuizResultSchema, QuizAttemptSchema
 from app.services.results_for_quiz import calculate_quiz_score
 from app.utils.check_time_solve_quiz import check_timeout
@@ -34,8 +34,17 @@ class ResultsRepository:
         await check_timeout(self.session, quiz, user_id)
         score = calculate_quiz_score(quiz, quiz_attempt.answers)
 
-        total_correct_answers = sum(1 for answer in quiz_attempt.answers if answer.is_correct)
+        total_correct_answers = 0
         total_questions_answered = len(quiz.questions)
+
+        for answer in quiz_attempt.answers:
+            options = await self.session.execute(select(Option).filter(Option.question_id == answer.question_id))
+            options = options.scalars().all()
+
+            for option in options:
+                if option.id == answer.option_id and option.is_correct:
+                    total_correct_answers += 1
+                    break
 
         quiz_result = QuizResult(user_id=user_id,
                                  quiz_id=quiz_attempt.quiz_id,
@@ -53,8 +62,7 @@ class ResultsRepository:
 
 
     async def get_quiz_average_score(self, quiz_id: int):
-        quiz_results = (select(QuizResult)
-                        .where(QuizResult.quiz_id == quiz_id))
+        quiz_results = (select(QuizResult).where(QuizResult.quiz_id == quiz_id))
 
         quiz_results = await self.session.execute(quiz_results)
         quiz_results = quiz_results.scalars().all()
@@ -70,15 +78,14 @@ class ResultsRepository:
             if total_questions_answered == 0:
                 return None
 
-            average_score = total_correct_answers / total_questions_answered
+            average_score = (total_correct_answers / total_questions_answered) * 100
             return average_score
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
 
 
     async def get_user_average_score(self, user_id: int):
-        quiz_results = (select(QuizResult)
-                        .where(QuizResult.user_id == user_id))
+        quiz_results = (select(QuizResult).where(QuizResult.user_id == user_id))
 
         quiz_results = await self.session.execute(quiz_results)
         quiz_results = quiz_results.scalars().all()
@@ -94,15 +101,14 @@ class ResultsRepository:
             if total_questions_answered == 0:
                 return None
 
-            average_score = total_correct_answers / total_questions_answered
+            average_score = (total_correct_answers / total_questions_answered) * 100
             return average_score
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
 
 
     async def get_company_average_score(self, company_id: int):
-        quiz_results = (select(QuizResult)
-                        .where(QuizResult.company_id == company_id))
+        quiz_results = (select(QuizResult).where(QuizResult.company_id == company_id))
 
         quiz_results = await self.session.execute(quiz_results)
         quiz_results = quiz_results.scalars().all()
@@ -118,7 +124,7 @@ class ResultsRepository:
             if total_questions_answered == 0:
                 return None
 
-            average_score = total_correct_answers / total_questions_answered
+            average_score = (total_correct_answers / total_questions_answered) * 100
             return average_score
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
