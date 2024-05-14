@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.connect_db import get_session
 from app.db.models import User
 from app.repositories.results_repo import ResultsRepository
-from app.schemas.quizzes import QuizBaseSchema
+from app.schemas.quizzes import QuizQuestionsSchema
 from app.schemas.result_quizes import QuizAttemptSchema, QuizResultSchema
 from app.services.check_user_permissions import verify_company_permissions, verify_quiz_permissions, \
     verify_company_owner_or_admin, verify_user_permission
@@ -15,7 +15,7 @@ results_router = APIRouter()
 
 
 @results_router.get(path="/{company_id}/{quiz_id}/",
-                     response_model=QuizBaseSchema,
+                     response_model=QuizQuestionsSchema,
                      dependencies=[Depends(verify_company_permissions)])
 async def get_quiz_for_solve(quiz_id: int,
                              session: AsyncSession = Depends(get_session)):

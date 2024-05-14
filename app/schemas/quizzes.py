@@ -33,6 +33,12 @@ class OptionUpdateSchema(BaseModel):
 class QuestionBaseSchema(BaseModel):
     id: int
     text: str
+    options: List[OptionBaseSchema]
+
+
+class QuestionReadSchema(BaseModel):
+    id: int
+    text: str
     options: List[OptionReadSchema]
 
 
@@ -77,3 +83,10 @@ class QuizReadSchema(QuizBaseSchema):
 
     class Config:
         from_attributes = True
+
+
+class QuizQuestionsSchema(BaseModel):
+    title: str
+    description: Optional[str]
+    frequency_days: int
+    questions: List[QuestionReadSchema]
