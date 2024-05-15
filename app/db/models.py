@@ -1,4 +1,6 @@
-from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import Column, String, Boolean, Integer, ForeignKey, DateTime, Float
 from sqlalchemy.orm import relationship
 
 from app.enums.invite_status import InviteStatusEnum, InviteTypeEnum
@@ -6,7 +8,7 @@ from app.enums.visability import VisibilityEnum
 from app.db.base_model import Base
 from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from app.enums.roles_users import RoleEnum
-from app.schemas.quizzes import QuizReadSchema
+
 
 
 class User(Base):
@@ -85,3 +87,19 @@ class Option(Base):
     question_id = Column(Integer, ForeignKey("questions.id", ondelete="CASCADE"))
 
     question = relationship("Question", back_populates="options")
+
+
+class QuizResult(Base):
+    __tablename__ = "quiz_results"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    score = Column(Float, nullable=False)
+    total_correct_answers = Column(Integer, nullable=False, default=0)
+    total_questions_answered = Column(Integer, nullable=False, default=0)
+    solved_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    user = relationship("User")
+    quiz = relationship("Quiz")
+    company = relationship("Company")
