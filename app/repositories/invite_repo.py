@@ -20,9 +20,9 @@ class InviteRepository:
             raise HTTPException(status_code=404, detail="Company not found")
 
         results = await InvitesServices.create_invite_service(session=self.session,
-                                                        current_user=current_user,
-                                                        company=company,
-                                                        username=invite.username)
+                                                              current_user=current_user,
+                                                              company=company,
+                                                              username=invite.username)
         return results
 
 
@@ -36,8 +36,8 @@ class InviteRepository:
         invite = await self.session.get(InviteUser, invite_id)
         if invite:
             await InvitesServices.accept_invite_service(session=self.session,
-                                                    invite=invite,
-                                                    current_user=current_user)
+                                                        invite=invite,
+                                                        current_user=current_user)
         else:
             raise HTTPException(status_code=404, detail="Invite not found")
 
@@ -60,7 +60,7 @@ class InviteRepository:
         invite = await self.session.get(InviteUser, invite_id)
         if invite:
             await InvitesServices.delete_invite_or_request_service(session=self.session,
-                                                        invite=invite,
-                                                        current_user=current_user)
+                                                                   invite=invite,
+                                                                   current_user=current_user)
         else:
             raise HTTPException(status_code=404, detail="Invite not found")
