@@ -6,6 +6,7 @@ from starlette import status
 
 from app.db.models import Quiz, QuizResult, Option
 from app.schemas.result_quizes import QuizResultSchema, QuizAttemptSchema
+from app.services.calculate_average_results import calculate_average_score
 from app.services.results_for_quiz import calculate_quiz_score
 from app.utils.check_time_solve_quiz import check_timeout
 
@@ -68,18 +69,7 @@ class ResultsRepository:
         quiz_results = quiz_results.scalars().all()
 
         if quiz_results:
-            total_questions_answered = 0
-            total_correct_answers = 0
-
-            for result in quiz_results:
-                total_questions_answered += result.total_questions_answered
-                total_correct_answers += result.total_correct_answers
-
-            if total_questions_answered == 0:
-                return None
-
-            average_score = (total_correct_answers / total_questions_answered) * 100
-            return average_score
+            return await calculate_average_score(quiz_results)
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
 
@@ -91,18 +81,7 @@ class ResultsRepository:
         quiz_results = quiz_results.scalars().all()
 
         if quiz_results:
-            total_questions_answered = 0
-            total_correct_answers = 0
-
-            for result in quiz_results:
-                total_questions_answered += result.total_questions_answered
-                total_correct_answers += result.total_correct_answers
-
-            if total_questions_answered == 0:
-                return None
-
-            average_score = (total_correct_answers / total_questions_answered) * 100
-            return average_score
+            return await calculate_average_score(quiz_results)
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
 
@@ -114,17 +93,6 @@ class ResultsRepository:
         quiz_results = quiz_results.scalars().all()
 
         if quiz_results:
-            total_questions_answered = 0
-            total_correct_answers = 0
-
-            for result in quiz_results:
-                total_questions_answered += result.total_questions_answered
-                total_correct_answers += result.total_correct_answers
-
-            if total_questions_answered == 0:
-                return None
-
-            average_score = (total_correct_answers / total_questions_answered) * 100
-            return average_score
+            return await calculate_average_score(quiz_results)
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
