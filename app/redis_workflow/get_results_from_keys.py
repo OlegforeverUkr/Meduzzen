@@ -8,6 +8,7 @@ async def get_data_by_quiz_id(quiz_id):
     for key in keys:
         value = await redis.get(key)
         data.append(value)
+    redis.close()
     return data
 
 
@@ -18,6 +19,7 @@ async def get_data_by_company_id(company_id):
     for key in keys:
         value = await redis.get(key)
         data.append(value)
+    redis.close()
     return data
 
 
@@ -28,4 +30,5 @@ async def get_data_by_user_id(user_id):
     for key in keys:
         value = await redis.get(key)
         data.append(value)
+    redis.close()
     return data

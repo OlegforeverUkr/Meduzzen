@@ -9,6 +9,7 @@ from starlette import status
 from app.db.models import Quiz, QuizResult, Option
 from app.redis_workflow.get_results_from_keys import get_data_by_quiz_id, get_data_by_company_id, get_data_by_user_id
 from app.redis_workflow.redis_workers import save_data_to_redis_db
+from app.redis_workflow.save_results_to_redis import save_results_to_redis
 from app.schemas.result_quizes import QuizResultSchema, QuizAttemptSchema
 from app.services.calculate_average_results import calculate_average_score_db, calculate_average_score_redis
 from app.services.results_for_quiz import calculate_quiz_score
@@ -82,8 +83,12 @@ class ResultsRepository:
         quiz_results = await get_data_by_quiz_id(quiz_id)
 
         if quiz_results:
-            response_dict = json.loads("".join(i for i in quiz_results))
-            return await calculate_average_score_redis(response_dict)
+            answer_dict = {"total_questions_answered": 0, "total_correct_answers": 0}
+            for result in quiz_results:
+                response_dict = json.loads(result)
+                answer_dict["total_questions_answered"] += response_dict["total_questions_answered"]
+                answer_dict["total_correct_answers"] += response_dict["total_correct_answers"]
+            return await calculate_average_score_redis(answer_dict)
 
         quiz_results = (select(QuizResult).where(QuizResult.quiz_id == quiz_id))
 
@@ -91,6 +96,7 @@ class ResultsRepository:
         quiz_results = quiz_results.scalars().all()
 
         if quiz_results:
+            await save_results_to_redis(quiz_results)
             return await calculate_average_score_db(quiz_results)
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
@@ -98,9 +104,14 @@ class ResultsRepository:
 
     async def get_user_average_score(self, user_id: int):
         user_results = await get_data_by_user_id(user_id)
+
         if user_results:
-            response_dict = json.loads("".join(i for i in user_results))
-            return await calculate_average_score_redis(response_dict)
+            answer_dict = {"total_questions_answered": 0, "total_correct_answers": 0}
+            for result in user_results:
+                response_dict = json.loads(result)
+                answer_dict["total_questions_answered"] += response_dict["total_questions_answered"]
+                answer_dict["total_correct_answers"] += response_dict["total_correct_answers"]
+            return await calculate_average_score_redis(answer_dict)
 
         quiz_results = (select(QuizResult).where(QuizResult.user_id == user_id))
 
@@ -108,6 +119,7 @@ class ResultsRepository:
         quiz_results = quiz_results.scalars().all()
 
         if quiz_results:
+            await save_results_to_redis(quiz_results)
             return await calculate_average_score_db(quiz_results)
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
@@ -115,9 +127,14 @@ class ResultsRepository:
 
     async def get_company_average_score(self, company_id: int):
         company_results = await get_data_by_company_id(company_id)
+
         if company_results:
-            response_dict = json.loads("".join(i for i in company_results))
-            return await calculate_average_score_redis(response_dict)
+            answer_dict = {"total_questions_answered": 0, "total_correct_answers": 0}
+            for result in company_results:
+                response_dict = json.loads(result)
+                answer_dict["total_questions_answered"] += response_dict["total_questions_answered"]
+                answer_dict["total_correct_answers"] += response_dict["total_correct_answers"]
+            return await calculate_average_score_redis(answer_dict)
 
         quiz_results = (select(QuizResult).where(QuizResult.company_id == company_id))
 
@@ -125,6 +142,7 @@ class ResultsRepository:
         quiz_results = quiz_results.scalars().all()
 
         if quiz_results:
+            await save_results_to_redis(quiz_results)
             return await calculate_average_score_db(quiz_results)
         else:
             raise HTTPException(status_code=404, detail="No quiz results found")
