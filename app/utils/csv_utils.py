@@ -5,7 +5,7 @@ from app.schemas.result_quizes import GeneralQuizResultSchema
 
 def generate_csv(results: List[GeneralQuizResultSchema], file_path: str):
     with open(file_path, mode='w', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file)
+        csv_writer = csv.writer(csv_file, delimiter=';')
         csv_writer.writerow(["user_id", "quiz_id", "company_id", "score", "total_correct_answers", "total_questions_answered"])
 
         for result in results:

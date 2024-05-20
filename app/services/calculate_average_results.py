@@ -1,7 +1,3 @@
-from typing import Sequence
-from app.db.models import QuizResult
-
-
 async def calculate_average_score_db(quiz_results):
     total_questions_answered = 0
     total_correct_answers = 0
