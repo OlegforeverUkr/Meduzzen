@@ -18,7 +18,7 @@ total_results_router = APIRouter()
 
 @total_results_router.get(path="/my-results/", response_model=List[GeneralQuizResultSchema])
 async def get_my_total_results(current_user: User = Depends(get_current_user_from_token),
-                         session: AsyncSession = Depends(get_session)):
+                               session: AsyncSession = Depends(get_session)):
     repository = SummaryResultsRepository(session)
     results = await repository.get_user_quiz_results(user_id=current_user.id)
     return results
@@ -63,3 +63,15 @@ async def export_quiz_results_csv(company_id: int,
     generate_csv(results, file_path)
 
     return FileResponse(path=file_path, media_type='text/csv', filename=f"quiz_results_{company_id}_{quiz_id}.csv")
+
+
+@total_results_router.get(path="/user/export/quiz-results/csv")
+async def export_user_results(current_user: User = Depends(get_current_user_from_token),
+                              session: AsyncSession = Depends(get_session)):
+    repository = SummaryResultsRepository(session)
+    results = await repository.get_user_quiz_results(user_id=current_user.id)
+
+    file_path = rf"C:\Users\Oleg\Desktop\Results\quiz_results_for_user-{current_user.id}.csv"
+    generate_csv(results, file_path)
+
+    return FileResponse(path=file_path, media_type='text/csv', filename=f"quiz_results_for_user-{current_user.id}.csv")
