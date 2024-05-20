@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import and_
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,7 +41,7 @@ class CompanyRepository:
 
         company_member = await self.session.execute(
             select(CompanyMember)
-            .filter(CompanyMember.company_id == company_id, CompanyMember.user_id == current_user.id)
+            .filter(and_(CompanyMember.company_id == company_id, CompanyMember.user_id == current_user.id))
         )
 
         if not company_member:
@@ -127,9 +128,9 @@ class CompanyRepository:
             query = (
                 select(User)
                 .join(CompanyMember)
-                .filter(
+                .filter(and_(
                     CompanyMember.company_id == company_id,
-                    CompanyMember.role == RoleEnum.ADMIN
+                    CompanyMember.role == RoleEnum.ADMIN)
                 )
             )
             result = await self.session.execute(query)
@@ -148,9 +149,7 @@ class CompanyRepository:
             query = (
                 select(User)
                 .join(CompanyMember)
-                .filter(
-                    CompanyMember.company_id == company_id
-                )
+                .filter(CompanyMember.company_id == company_id)
             )
             result = await self.session.execute(query)
             members = result.scalars().all()
