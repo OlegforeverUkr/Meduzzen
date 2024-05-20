@@ -18,3 +18,15 @@ class QuizResultSchema(BaseModel):
     quiz_id: int
     company_id: int
     score: float
+
+
+class GeneralQuizResultSchema(BaseModel):
+    user_id: int
+    quiz_id: int
+    company_id: int
+    score: float
+    total_correct_answers: int
+    total_questions_answered: int
+
+    class Config:
+        from_attributes = True
