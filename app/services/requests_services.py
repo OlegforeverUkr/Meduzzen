@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.db.models import InviteUser, CompanyMember, Company, User
@@ -16,7 +16,7 @@ class RequestService:
     async def get_all_user_requests_service(session, current_user):
         user_requests = await session.execute(
             select(InviteUser)
-            .where((InviteUser.user_id == current_user.id) & (InviteUser.type_invite == InviteTypeEnum.REQUEST))
+            .where(and_(InviteUser.user_id == current_user.id, InviteUser.type_invite == InviteTypeEnum.REQUEST))
             .options(joinedload(InviteUser.user), joinedload(InviteUser.company))
         )
         return [InviteUserSchema(id=invite[0].id,
@@ -28,7 +28,7 @@ class RequestService:
     @staticmethod
     async def get_requests_users_in_company_service(session, company_id, company, current_user):
         user = await session.execute(select(CompanyMember)
-                                          .where((CompanyMember.user_id == current_user.id) & (CompanyMember.company_id == company.id)))
+                                          .where(and_(CompanyMember.user_id == current_user.id, CompanyMember.company_id == company.id)))
         user = user.scalar_one_or_none()
 
         if not user or user.role != RoleEnum.OWNER:
@@ -36,8 +36,7 @@ class RequestService:
 
         members = await session.execute(
             select(CompanyMember)
-            .filter(CompanyMember.company_id == company_id)
-            .filter(CompanyMember.role == RoleEnum.MEMBER)
+            .where(and_(CompanyMember.company_id == company_id, CompanyMember.role == RoleEnum.MEMBER))
             .options(selectinload(CompanyMember.user))
         )
         members = members.fetchall()
@@ -70,9 +69,7 @@ class RequestService:
 
         current_user_info = await session.execute(
             select(CompanyMember)
-            .filter(CompanyMember.company_id == invite.company_id)
-            .filter(CompanyMember.user_id == current_user.id)
-        )
+            .where(and_(CompanyMember.company_id == invite.company_id, CompanyMember.user_id == current_user.id)))
         current_user_info = current_user_info.scalar_one_or_none()
 
         if not current_user_info or current_user_info.role != RoleEnum.OWNER:
@@ -89,8 +86,7 @@ class RequestService:
     async def reject_invite_service(session, invite, current_user):
         current_user_info = await session.execute(
             select(CompanyMember)
-            .where((CompanyMember.user_id == current_user.id) & (CompanyMember.company_id == invite.company_id))
-            .first()
+            .where(and_(CompanyMember.user_id == current_user.id, CompanyMember.company_id == invite.company_id))
         )
         current_user_info = current_user_info.scalar_one_or_none()
 

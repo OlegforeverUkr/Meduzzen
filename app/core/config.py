@@ -30,4 +30,7 @@ class Settings(BaseSettings):
     SIGNING_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
+
 settings = Settings(_env_file='../.env', _env_file_encoding='utf-8')

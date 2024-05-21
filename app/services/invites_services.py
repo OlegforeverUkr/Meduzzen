@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.orm import joinedload
 
 from app.db.models import CompanyMember, InviteUser, User, Company
@@ -14,8 +14,7 @@ class InvitesServices:
     @staticmethod
     async def create_invite_service(session, current_user, company, username):
         user_created = await session.execute(select(CompanyMember)
-                                               .where(CompanyMember.user_id == current_user.id)
-                                               .where(CompanyMember.company_id == company.id))
+                                             .where(and_(CompanyMember.user_id == current_user.id, CompanyMember.company_id == company.id)))
         user_created = user_created.scalar_one_or_none()
 
         if not user_created or user_created.role != RoleEnum.OWNER:
@@ -69,7 +68,7 @@ class InvitesServices:
     async def delete_invite_or_request_service(session, invite, current_user):
         inviter_company_member = await session.execute(
             select(CompanyMember)
-            .where((CompanyMember.user_id == invite.user_id) & (CompanyMember.company_id == invite.company_id))
+            .where(and_(CompanyMember.user_id == invite.user_id, CompanyMember.company_id == invite.company_id))
         )
         inviter_company_member = inviter_company_member.scalar_one_or_none()
 
