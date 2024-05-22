@@ -103,3 +103,5 @@ class QuizResult(Base):
     user = relationship("User")
     quiz = relationship("Quiz")
     company = relationship("Company")
+
+
