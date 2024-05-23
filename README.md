@@ -79,10 +79,8 @@ PORT=Insert port for app
 
 
 
+Для запуска Сelery следует ввести следующую команду - 
 
-
-
-
-
+    celery -A app.utils.celery_app worker --loglevel=INFO --pool=solo
 
 
