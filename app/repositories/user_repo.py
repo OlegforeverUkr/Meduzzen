@@ -1,10 +1,12 @@
+from sqlalchemy import and_
 from sqlalchemy.exc import DatabaseError
 from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.db.models import User
+from app.db.models import User, Notification
+from app.enums.notification_status import NotificationStatusEnum
 from app.schemas.users import UserCreateSchema, UserUpdateRequestSchema
 
 from app.services.handlers_errors import get_user_or_404
@@ -105,3 +107,24 @@ class UserRepository:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return user
+
+
+    async def get_messages_for_user(self, user_id: int):
+        notifications = await self.session.execute(select(Notification)
+                                             .filter(Notification.user_id == user_id))
+        messages = notifications.scalars().all()
+        return messages
+
+
+    async def mark_message_as_read(self, message_id: int, user_id: int):
+        query = await self.session.execute(select(Notification)
+                                            .where(and_(Notification.id == message_id, Notification.user_id == user_id)))
+        notification = query.scalar_one_or_none()
+
+        if notification:
+            notification.status = NotificationStatusEnum.READ
+            await self.session.commit()
+            await self.session.refresh(notification)
+            return notification
+        else:
+            raise HTTPException(status_code=404, detail="Message not found")
