@@ -1,3 +1,4 @@
+import smtplib
 from datetime import timedelta, datetime
 
 from celery import Celery
@@ -7,7 +8,7 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.db.connect_db import AsyncSessionFactory
 from app.db.models import User, QuizResult, Quiz, Notification
-
+from app.utils.send_messeges import get_email_template_message
 
 celery = Celery('tasks', broker=settings.CELERY_BROKER_URL, backend=settings.CELERY_RESULT_BACKEND)
 celery.conf.update(broker_connection_retry_on_startup=True)
@@ -39,7 +40,14 @@ def test_task():
     return f"Проверочная задача выполнена успешно! Текущее время: {current_time}"
 
 
-
+@celery.task
+def send_message_to_email(username: str):
+    email = get_email_template_message(username)
+    with smtplib.SMTP(host='smtp.gmail.com', port=587) as server:
+        server.starttls()
+        server.login(user=settings.EMAIL_FROM, password=settings.EMAIL_PASSWORD)
+        server.send_message(from_addr=settings.EMAIL_FROM, to_addrs=settings.EMAIL_TO, msg=email)
+    return f"Email был отправлен {username}"
 
 
 celery.add_periodic_task(crontab(hour='0', minute='0', day_of_week='*'),

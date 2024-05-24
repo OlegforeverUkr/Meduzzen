@@ -13,7 +13,7 @@ from app.services.auth import authenticate_user
 from app.services.check_user_permissions import verify_user_permission
 from app.services.create_token import create_access_token
 from app.services.get_user_from_token import get_current_user_from_token
-
+from app.utils.celery_app import send_message_to_email
 from app.utils.token_verify import VerifyToken
 
 user_router = APIRouter()
@@ -98,3 +98,9 @@ async def mark_as_read_message_router(message_id: int,
                                       current_user: User = Depends(get_current_user_from_token)):
     read_message = await UserRepository(session=session).mark_message_as_read(message_id=message_id, user_id=current_user.id)
     return read_message
+
+
+@user_router.get("/run-test-task")
+async def run_test_task():
+    send_message_to_email.delay("Вася")
+    return {"message": "Проверочная задача запущена успешно!"}

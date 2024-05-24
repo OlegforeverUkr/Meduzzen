@@ -33,4 +33,10 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
 
+    EMAIL_HOST: str
+    EMAIL_PORT: int
+    EMAIL_FROM: str
+    EMAIL_TO: str
+    EMAIL_PASSWORD: str
+
 settings = Settings(_env_file='../.env', _env_file_encoding='utf-8')
