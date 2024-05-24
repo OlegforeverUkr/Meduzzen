@@ -79,8 +79,14 @@ PORT=Insert port for app
 
 
 
-Для запуска Сelery следует ввести следующую команду - 
+Для запуска worker'a Сelery следует ввести следующую команду - 
 
-    celery -A app.utils.celery_app worker --loglevel=INFO --pool=solo
+    celery -A celery_start_processes worker --loglevel=INFO --pool=solo
 
+Для запуска beat'a Сelery следует ввести следующую команду - 
 
+    celery -A celery_start_processes beat --loglevel=INFO
+
+Для запуска flower следует ввести следующую команду - 
+
+    celery -A celery_start_processes flower --port=5555

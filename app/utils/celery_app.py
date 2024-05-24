@@ -1,5 +1,7 @@
-from celery import Celery
 from datetime import timedelta, datetime
+
+from celery import Celery
+from celery.schedules import crontab
 from sqlalchemy import select
 
 from app.core.config import settings
@@ -8,6 +10,8 @@ from app.db.models import User, QuizResult, Quiz, Notification
 
 
 celery = Celery('tasks', broker=settings.CELERY_BROKER_URL, backend=settings.CELERY_RESULT_BACKEND)
+celery.conf.update(broker_connection_retry_on_startup=True)
+
 
 
 @celery.task
@@ -32,16 +36,27 @@ async def run_user_quiz_check():
 @celery.task
 def test_task():
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Проверочная задача выполнена успешно! Текущее время: {current_time}")
+    return f"Проверочная задача выполнена успешно! Текущее время: {current_time}"
 
 
-celery.conf.beat_schedule = {
-    'run-every-day-at-midnight': {
-        'task': 'tasks.run_user_quiz_check',
-        'schedule': timedelta(days=1),
-    },
-    'run-test-task': {
-        'task': 'tasks.test_task',
-        'schedule': timedelta(seconds=30),
-    }
-}
+
+
+
+celery.add_periodic_task(crontab(hour='0', minute='0', day_of_week='*'),
+                         run_user_quiz_check.s(),
+                         name='run-every-day-at-midnight')
+celery.add_periodic_task(timedelta(seconds=30), test_task.s(), name='run-test-task')
+
+
+# Another option for adding tasks frequency
+
+# celery.conf.beat_schedule = {
+#     'run-every-day-at-midnight': {
+#         'task': 'app.celery_workflow.tasks.run_user_quiz_check',
+#         'schedule': crontab(hour='0', minute='0', day_of_week='*'),
+#     },
+#     'run-test-task': {
+#         'task': 'app.celery_workflow.tasks.test_task',
+#         'schedule': timedelta(seconds=30),
+#     }
+# }
