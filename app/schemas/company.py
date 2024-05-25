@@ -67,3 +67,8 @@ class CompanyUpdateSchema(BaseModel):
         if len(company_name) < MIN_LEN or len(description) < MIN_LEN:
             raise ValueError('Company name and description must contain at least 5 characters')
         return company_name, description
+
+
+class SendMessageToMemberSchema(BaseModel):
+    username: str
+    message_text: str

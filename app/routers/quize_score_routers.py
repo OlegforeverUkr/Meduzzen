@@ -11,7 +11,7 @@ from app.services.check_user_permissions import verify_company_permissions, veri
 from app.services.get_user_from_token import get_current_user_from_token
 
 
-results_router = APIRouter()
+results_router = APIRouter(tags=["Results"])
 
 
 @results_router.get(path="/{company_id}/{quiz_id}/",

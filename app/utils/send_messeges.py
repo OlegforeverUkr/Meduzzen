@@ -1,5 +1,8 @@
 from email.message import EmailMessage
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
+from app.db.models import Notification
 
 
 def get_email_template_message(username: str):
@@ -16,3 +19,9 @@ def get_email_template_message(username: str):
         subtype='html'
     )
     return email
+
+
+async def save_message_to_db(session: AsyncSession, user_id: int, message: str):
+    notification = Notification(user_id=user_id, message=message)
+    session.add(notification)
+    await session.commit()
