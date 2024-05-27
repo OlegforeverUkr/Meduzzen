@@ -39,4 +39,7 @@ class Settings(BaseSettings):
     EMAIL_TO: str
     EMAIL_PASSWORD: str
 
+    GMAIL_HOST: str
+    GMAIL_PORT: int
+
 settings = Settings(_env_file='../.env', _env_file_encoding='utf-8')

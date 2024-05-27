@@ -1,5 +1,5 @@
-from app.utils.celery_app import celery
+from app.utils.celery_app import celery_app
 
 
 if __name__ == "__main__":
-    celery.start()
+    celery_app .start()

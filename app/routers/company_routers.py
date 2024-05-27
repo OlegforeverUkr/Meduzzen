@@ -7,6 +7,7 @@ from starlette import status
 from app.db.connect_db import get_session
 from app.db.models import User
 from app.repositories.company_repo import CompanyRepository
+from app.repositories.notification_repo import NotificationRepository
 from app.repositories.quizze_repo import QuizRepository
 from app.schemas.company import CompanySchema, CompanyCreateSchema, CompanyUpdateSchema, SendMessageToMemberSchema
 from app.schemas.quizzes import QuizCreateSchema, QuizReadSchema, QuizUpdateSchema, QuizBaseSchema, QuestionUpdateSchema
@@ -14,8 +15,8 @@ from app.schemas.users import UserSchema
 from app.services.check_user_permissions import verify_company_permissions, verify_company_owner, \
     verify_company_owner_or_admin
 from app.services.get_user_from_token import get_current_user_from_token
-from app.utils.celery_app import send_message_to_email
-from app.utils.send_messeges import save_message_to_db
+from app.utils.tasks import send_message_to_email
+
 
 company_routers = APIRouter(tags=["Company"])
 
@@ -97,8 +98,8 @@ async def send_message_to_company_member(company_id: int,
     send_message_to_email.delay(user_email=company_member.email,
                                 username=company_member.username,
                                 message_text=message.message_text)
-    await save_message_to_db(session=session, user_id=company_member.id, message=message.message_text)
-    return {"message": f"Сообщение отправлено пользователю - {company_member.username}"}
+    await NotificationRepository(session=session).save_message_to_db(user_id=company_member.id, message=message.message_text)
+    return {"message": f"Message sent to user- {company_member.username}"}
 
 # _____________________________________________________________________________________________________
 

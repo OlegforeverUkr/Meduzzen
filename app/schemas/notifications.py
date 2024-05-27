@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class MessageSchema(BaseModel):
+class NotificationSchema(BaseModel):
     id: int
     message: str
 
@@ -11,7 +11,7 @@ class MessageSchema(BaseModel):
         from_attributes = True
 
 
-class MessageReadSchema(BaseModel):
+class NotificationReadSchema(BaseModel):
     id: int
     message: str
     status: str
