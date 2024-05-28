@@ -13,7 +13,7 @@ from app.services.get_user_from_token import get_current_user_from_token
 from app.utils.csv_utils import generate_csv
 
 
-total_results_router = APIRouter()
+total_results_router = APIRouter(tags=["Save Results"])
 
 
 @total_results_router.get(path="/my-results/", response_model=List[GeneralQuizResultSchema])

@@ -4,6 +4,7 @@ from sqlalchemy import Column, String, Boolean, Integer, ForeignKey, DateTime, F
 from sqlalchemy.orm import relationship
 
 from app.enums.invite_status import InviteStatusEnum, InviteTypeEnum
+from app.enums.notification_status import NotificationStatusEnum
 from app.enums.visability import VisibilityEnum
 from app.db.base_model import Base
 from sqlalchemy.dialects.postgresql import ENUM as PgEnum
@@ -20,6 +21,7 @@ class User(Base):
     is_admin = Column(Boolean, default=True)
 
     companies = relationship("CompanyMember", back_populates="user", cascade="all, delete")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete")
 
 
 class Company(Base):
@@ -103,3 +105,14 @@ class QuizResult(Base):
     user = relationship("User")
     quiz = relationship("Quiz")
     company = relationship("Company")
+
+
+class Notification(Base):
+    __tablename__ = 'notifications'
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    status = Column(PgEnum(NotificationStatusEnum, name="notification_status", create_type=True), nullable=False, default=NotificationStatusEnum.UNREAD)
+    message = Column(String, nullable=False)
+
+    user = relationship("User", back_populates="notifications")

@@ -11,6 +11,8 @@ from app.db.models import Quiz, Question, Option
 from app.schemas.quizzes import QuizUpdateSchema, QuizCreateSchema, QuizBaseSchema, QuestionBaseSchema, \
     OptionBaseSchema, QuestionUpdateSchema
 from app.services.handlers_errors import validate_quiz_data
+from app.utils.checking_uniqueness_quiz import checking_the_quiz_uniqueness
+from app.utils.send_notification_after_create_quiz import send_notifications
 
 
 class QuizRepository:
@@ -21,6 +23,7 @@ class QuizRepository:
 
     async def create_quiz(self, company_id: int, quiz_data: QuizCreateSchema):
         await validate_quiz_data(quiz_data)
+        await checking_the_quiz_uniqueness(session=self.session, company_id=company_id, quiz_title=quiz_data.title)
         title = quiz_data.title
         description = quiz_data.description
         frequency_days = quiz_data.frequency_days
@@ -56,7 +59,7 @@ class QuizRepository:
                 ]
             ) for question in questions
         ]
-
+        await send_notifications(session=self.session, quiz=new_quiz)
         answer = QuizBaseSchema(title=new_quiz.title,
                                 description=new_quiz.description,
                                 frequency_days=new_quiz.frequency_days,

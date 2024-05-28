@@ -1,8 +1,9 @@
 from datetime import datetime
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer
-from jose import ExpiredSignatureError, JWTError
+from jose import JWTError
 import jwt
+from jwt import ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -36,10 +37,12 @@ async def get_current_user_from_token(token: str = Depends(oauth2_scheme), sessi
             current_time = datetime.now()
 
             if expiration_time < current_time:
-                raise ExpiredSignatureError("Token has expired")
+                raise HTTPException(status_code=401, detail="Token has expired")
 
             return exists_user
 
+    except ExpiredSignatureError:
+        raise UnauthorizedException(detail="Token has expired")
+
     except JWTError:
         raise UnauthorizedException(detail="Could not validate credentials")
-

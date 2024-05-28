@@ -11,7 +11,7 @@ from app.schemas.invites import InviteUserSchema, InviteCreateSchema
 from app.schemas.users import UserSchema
 from app.services.get_user_from_token import get_current_user_from_token
 
-invite_routers = APIRouter()
+invite_routers = APIRouter(tags=["Invites"])
 
 
 @invite_routers.post("/invites/", response_model=InviteUserSchema)

@@ -7,15 +7,18 @@ from starlette import status
 from app.db.connect_db import get_session
 from app.db.models import User
 from app.repositories.company_repo import CompanyRepository
+from app.repositories.notification_repo import NotificationRepository
 from app.repositories.quizze_repo import QuizRepository
-from app.schemas.company import CompanySchema, CompanyCreateSchema, CompanyUpdateSchema
+from app.schemas.company import CompanySchema, CompanyCreateSchema, CompanyUpdateSchema, SendMessageToMemberSchema
 from app.schemas.quizzes import QuizCreateSchema, QuizReadSchema, QuizUpdateSchema, QuizBaseSchema, QuestionUpdateSchema
 from app.schemas.users import UserSchema
 from app.services.check_user_permissions import verify_company_permissions, verify_company_owner, \
     verify_company_owner_or_admin
 from app.services.get_user_from_token import get_current_user_from_token
+from app.utils.tasks import send_message_to_email
 
-company_routers = APIRouter()
+
+company_routers = APIRouter(tags=["Company"])
 
 
 @company_routers.get(path="/companies/", response_model=List[CompanySchema])
@@ -26,7 +29,9 @@ async def list_companies_router(skip: int = 0, limit: int = 10, session: AsyncSe
 
 
 @company_routers.get(path="/companies/{company_id}/", response_model=CompanySchema)
-async def get_company_by_id(company_id: int, session: AsyncSession = Depends(get_session), current_user: User = Depends(get_current_user_from_token)):
+async def get_company_by_id(company_id: int,
+                            session: AsyncSession = Depends(get_session),
+                            current_user: User = Depends(get_current_user_from_token)):
     company_repo = CompanyRepository(session=session)
     company = await company_repo.get_company(company_id=company_id, current_user=current_user)
     return company
@@ -45,11 +50,9 @@ async def create_company(company_data: CompanyCreateSchema,
 @company_routers.patch(path="/companies/{company_id}/",
                        response_model=CompanySchema,
                        dependencies=[Depends(verify_company_permissions)])
-async def update_company(
-    company_id: int,
-    company_data: CompanyUpdateSchema,
-    session: AsyncSession = Depends(get_session)
-):
+async def update_company(company_id: int,
+                         company_data: CompanyUpdateSchema,
+                         session: AsyncSession = Depends(get_session)):
     company_repo = CompanyRepository(session=session)
     updated_company = await company_repo.update_company(company_id=company_id,
                                                   company=company_data)
@@ -57,8 +60,8 @@ async def update_company(
 
 
 @company_routers.post(path="/companies/{company_member_id}/",
-                       response_model=  UserSchema,
-                       dependencies=[Depends(verify_company_owner)])
+                      response_model=  UserSchema,
+                      dependencies=[Depends(verify_company_owner)])
 async def create_admin_for_company(company_member_id: int, session: AsyncSession = Depends(get_session)):
     new_admin = await CompanyRepository(session).create_admin_for_company_repo(company_member_id=company_member_id)
     return new_admin
@@ -84,16 +87,29 @@ async def get_all_company_members(company_id: int, session: AsyncSession = Depen
 async def delete_company(company_id: int, session: AsyncSession = Depends(get_session)):
     await CompanyRepository(session=session).delete_company(company_id=company_id)
 
+
+
+@company_routers.post(path="/companies/{company_id}/send_message_company_member",
+                     dependencies=[Depends(verify_company_owner_or_admin)])
+async def send_message_to_company_member(company_id: int,
+                                         message: SendMessageToMemberSchema,
+                                         session: AsyncSession = Depends(get_session)):
+    company_member = await CompanyRepository(session=session).find_company_member(company_id=company_id, username=message.username)
+    send_message_to_email.delay(user_email=company_member.email,
+                                username=company_member.username,
+                                message_text=message.message_text)
+    await NotificationRepository(session=session).save_message_to_db(user_id=company_member.id, message=message.message_text)
+    return {"message": f"Message sent to user- {company_member.username}"}
+
 # _____________________________________________________________________________________________________
 
 @company_routers.post(path="/companies/{company_id}/quizzes/",
                       response_model=QuizBaseSchema,
                       status_code=status.HTTP_201_CREATED,
                       dependencies=[Depends(verify_company_owner_or_admin)])
-async def create_quiz_for_company(
-    company_id: int,
-    quiz_data: QuizCreateSchema,
-    session: AsyncSession = Depends(get_session)):
+async def create_quiz_for_company(company_id: int,
+                                  quiz_data: QuizCreateSchema,
+                                  session: AsyncSession = Depends(get_session)):
     quiz_repo = QuizRepository(session=session)
     new_quiz = await quiz_repo.create_quiz(company_id=company_id, quiz_data=quiz_data)
     return new_quiz
@@ -102,12 +118,10 @@ async def create_quiz_for_company(
 @company_routers.get(path="/companies/{company_id}/quizzes/",
                      response_model=list[QuizReadSchema],
                      dependencies=[Depends(verify_company_permissions)])
-async def get_quizzes_for_company(
-    company_id: int,
-    skip: int = 0,
-    limit: int = 10,
-    session: AsyncSession = Depends(get_session)
-):
+async def get_quizzes_for_company(company_id: int,
+                                  skip: int = 0,
+                                  limit: int = 10,
+                                  session: AsyncSession = Depends(get_session)):
     quiz_repo = QuizRepository(session=session)
     quizzes = await quiz_repo.get_quizzes_for_company(company_id=company_id, skip=skip, limit=limit)
     return quizzes

@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Company, User, CompanyMember
+from app.repositories.user_repo import UserRepository
 from app.schemas.company import CompanyCreateSchema, CompanyUpdateSchema, CompanySchema
 import logging
 
@@ -158,3 +159,17 @@ class CompanyRepository:
             return members
         else:
             raise HTTPException(status_code=404, detail="Company not found")
+
+
+    async def find_company_member(self, company_id: int, username: str):
+        user = await UserRepository(session=self.session).get_user_by_username(username=username)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        query = (select(CompanyMember).where(and_(CompanyMember.company_id == company_id, CompanyMember.user_id == user.id)))
+        result = await self.session.execute(query)
+        company_member = result.scalar_one_or_none()
+
+        if not company_member:
+            raise HTTPException(status_code=404, detail="No members found for the company")
+        return user

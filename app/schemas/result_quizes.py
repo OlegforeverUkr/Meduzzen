@@ -1,6 +1,7 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 from typing import List
-
 
 
 class AnswerSchema(BaseModel):
@@ -27,6 +28,7 @@ class GeneralQuizResultSchema(BaseModel):
     score: float
     total_correct_answers: int
     total_questions_answered: int
+    solved_at: datetime
 
     class Config:
         from_attributes = True

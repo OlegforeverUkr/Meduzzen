@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.db.models import User
+from app.db.models import User, Notification
 from app.schemas.users import UserCreateSchema, UserUpdateRequestSchema
 
 from app.services.handlers_errors import get_user_or_404
@@ -105,3 +105,11 @@ class UserRepository:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return user
+
+
+    async def get_messages_for_user(self, user_id: int):
+        notifications = await self.session.execute(select(Notification)
+                                             .filter(Notification.user_id == user_id))
+        messages = notifications.scalars().all()
+        return messages
+
