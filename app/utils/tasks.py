@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from sqlalchemy import select
-
+from sqlalchemy.sql.expression import lambda_stmt
 from app.db.connect_db import AsyncSessionFactory
 from app.db.models import User, QuizResult, Quiz, Notification
 from app.utils.send_emails import get_email_template_message
@@ -27,7 +27,7 @@ async def run_user_quiz_check():
         users = users.scalars().all()
 
         for user in users:
-            quiz_results = await session.execute(select(QuizResult).where(QuizResult.user_id == user.id))
+            quiz_results = await session.execute(select(QuizResult).where(lambda_stmt(lambda: QuizResult.user_id == user.id)))
             quiz_results = quiz_results.scalars().all()
 
             for quiz_result in quiz_results:
